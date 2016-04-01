@@ -34,8 +34,11 @@ class Task(models.Model):
 
     title = models.CharField('Task title', max_length=4096)
     description = models.TextField('Task description')
+    author = models.ForeignKey(User, verbose_name='Author of task',
+                               related_name='task_author')
     assigned_to = models.ManyToManyField(User, blank=True,
-                                         verbose_name='Task assigned to')
+                                         verbose_name='Task assigned to',
+                                         related_name='task_assigned')
     status = models.SmallIntegerField('Task status', choices=STATUS_CHOICES)
     criticality = models.SmallIntegerField('Task criticality',
                                            choices=CRITICALITY_CHOICES)

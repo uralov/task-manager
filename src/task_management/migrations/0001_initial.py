@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ('object_id', models.PositiveIntegerField()),
                 ('actor', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Actor')),
                 ('content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='actions', to='task_manage.Task', verbose_name='Action task')),
+                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='actions', to='task_management.Task', verbose_name='Action task')),
             ],
         ),
         migrations.CreateModel(
@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
                 ('time_create', models.DateTimeField(auto_now_add=True, verbose_name='Time of create')),
                 ('time_update', models.DateTimeField(auto_now=True, verbose_name='Time of update')),
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Author of comment')),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='task_manage.Task', verbose_name='Comment task')),
+                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='task_management.Task', verbose_name='Comment task')),
             ],
         ),
         migrations.CreateModel(
@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('reason', models.TextField(verbose_name='Reason for decline')),
                 ('time_decline', models.DateTimeField(auto_now_add=True, verbose_name='Time of decline')),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='declines', to='task_manage.Task', verbose_name='Declined task')),
+                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='declines', to='task_management.Task', verbose_name='Declined task')),
             ],
         ),
     ]

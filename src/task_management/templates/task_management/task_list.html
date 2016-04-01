@@ -1,0 +1,19 @@
+{% extends 'task_management/base.html' %}
+
+{% block content %}
+    <h1>Task list</h1>
+
+    <h2>Created by me:</h2>
+    <ul>
+        {% for task in task_created %}
+            <li><a href="">{{ task.title }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <h2>Assigned to me:</h2>
+    <ul>
+        {% for task in tasks_assigned %}
+            <li><a href="">{{ task.title }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
