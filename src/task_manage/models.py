@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 
 
@@ -56,3 +58,41 @@ class TaskAttachment:
                              verbose_name='Attachment task')
     attachment = models.FileField('Attachment',
                                   upload_to='task_attachment/%Y/%m/%d/')
+
+
+class TaskComment(models.Model):
+    """ Task comments model """
+    task = models.ForeignKey(Task, related_name='comments',
+                             verbose_name='Comment task')
+    author = models.ForeignKey(User, verbose_name='Author of comment')
+    message = models.TextField('Comment message')
+    time_create = models.DateTimeField('Time of create', auto_now_add=True)
+    time_update = models.DateTimeField('Time of update', auto_now=True)
+
+
+class TaskActionLog(models.Model):
+    """ User action log on tasks """
+    ACTION_TASK_CREATE = 0
+    ACTION_TASK_CHANGE = 1
+    ACTION_ATTACHMENT_UPLOAD = 2
+    ACTION_SUB_TASK_CREATE = 3
+    ACTION_TASK_STATUS_CHANGE = 4
+    ACTION_TASK_COMMENT = 5
+    ACTION_CHOICES = (
+        (ACTION_TASK_CREATE, 'Task create'),
+        (ACTION_TASK_CHANGE, 'Task change'),
+        (ACTION_ATTACHMENT_UPLOAD, 'Attachment upload'),
+        (ACTION_SUB_TASK_CREATE, 'Sub task create'),
+        (ACTION_TASK_STATUS_CHANGE, 'Task status change'),
+        (ACTION_TASK_COMMENT, 'Task comment'),
+    )
+
+    task = models.ForeignKey(Task, related_name='actions',
+                             verbose_name='Action task')
+    actor = models.ForeignKey(User, verbose_name='Actor')
+    action_type = models.SmallIntegerField('Action type',
+                                           choices=ACTION_CHOICES)
+    time_action = models.DateTimeField('Time of action', auto_now_add=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
