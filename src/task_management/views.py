@@ -1,12 +1,14 @@
 from django.core.urlresolvers import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
 )
+
 from task_management.forms import TaskFrom
 from task_management.models import Task
 
 
-class TaskListView(ListView):
+class TaskListView(LoginRequiredMixin, ListView):
     """ View to display the list of tasks """
     model = Task
     context_object_name = 'tasks_assigned'
@@ -22,7 +24,7 @@ class TaskListView(ListView):
         return context
 
 
-class TaskCreateView(CreateView):
+class TaskCreateView(LoginRequiredMixin, CreateView):
     model = Task
     form_class = TaskFrom
 
@@ -32,15 +34,15 @@ class TaskCreateView(CreateView):
         return super().form_valid(form)
 
 
-class TaskUpdateView(UpdateView):
+class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = Task
     form_class = TaskFrom
 
 
-class TaskDetailView(DetailView):
+class TaskDetailView(LoginRequiredMixin, DetailView):
     model = Task
 
 
-class TaskDeleteView(DeleteView):
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
     model = Task
     success_url = reverse_lazy('task_management:list')

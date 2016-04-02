@@ -31,8 +31,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'task_management',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -123,6 +121,13 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(
     os.path.dirname(BASE_DIR), 'public', 'media'
 )
+
+
+# TASK MANAGEMENT SYSTEM CONFIG BLOCK - START
+# enable task management system
+INSTALLED_APPS.append('task_management')
+
+# TASK MANAGEMENT SYSTEM CONFIG BLOCK - END
 
 
 try:
