@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 
 
 class Task(models.Model):
@@ -27,24 +28,32 @@ class Task(models.Model):
     CRITICALITY_MEDIUM = 1
     CRITICALITY_HIGH = 2
     CRITICALITY_CHOICES = (
-        (CRITICALITY_LOW, 'Low criticality'),
-        (CRITICALITY_MEDIUM, 'Medium criticality'),
-        (CRITICALITY_HIGH, 'High criticality'),
+        (CRITICALITY_LOW, 'Low'),
+        (CRITICALITY_MEDIUM, 'Medium'),
+        (CRITICALITY_HIGH, 'High'),
     )
 
-    title = models.CharField('Task title', max_length=4096)
-    description = models.TextField('Task description')
-    author = models.ForeignKey(User, verbose_name='Author of task',
+    title = models.CharField('Title', max_length=4096)
+    description = models.TextField('Description')
+    author = models.ForeignKey(User, verbose_name='Author',
                                related_name='task_author')
     assigned_to = models.ManyToManyField(User, blank=True,
-                                         verbose_name='Task assigned to',
+                                         verbose_name='Assigned to',
                                          related_name='task_assigned')
-    status = models.SmallIntegerField('Task status', choices=STATUS_CHOICES)
-    criticality = models.SmallIntegerField('Task criticality',
-                                           choices=CRITICALITY_CHOICES)
-    date_due = models.DateField('Task due date', blank=True, null=True)
+    status = models.SmallIntegerField('Status', choices=STATUS_CHOICES,
+                                      default=STATUS_DRAFT)
+    criticality = models.SmallIntegerField('Criticality',
+                                           choices=CRITICALITY_CHOICES,
+                                           default=CRITICALITY_MEDIUM)
+    date_due = models.DateField('Due date', blank=True, null=True)
     time_create = models.DateTimeField('Time of create', auto_now_add=True)
     time_update = models.DateTimeField('Time of update', auto_now=True)
+
+    def get_absolute_url(self):
+        return reverse('task_management:detail', kwargs={'pk': self.pk})
+
+    def __str__(self):
+        return self.title
 
 
 class TaskDecline(models.Model):
@@ -55,7 +64,7 @@ class TaskDecline(models.Model):
     time_decline = models.DateTimeField('Time of decline', auto_now_add=True)
 
 
-class TaskAttachment:
+class TaskAttachment(models.Model):
     """ Task attachments model """
     task = models.ForeignKey(Task, related_name='attachments',
                              verbose_name='Attachment task')
