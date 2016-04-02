@@ -5,7 +5,7 @@ from task_management.models import Task, TaskAttachment
 
 
 class TaskFrom(forms.ModelForm):
-    """  """
+    """ Form for creating task """
     class Meta:
         model = Task
         fields = ['title', 'description', 'criticality', 'date_due',
@@ -16,6 +16,6 @@ class TaskFrom(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit)
         for each in self.cleaned_data['attachments']:
-            TaskAttachment.objects.create(file=each, task=instance)
+            TaskAttachment.objects.create(attachment=each, task=instance)
 
         return instance
