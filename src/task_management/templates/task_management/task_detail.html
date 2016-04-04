@@ -8,6 +8,24 @@
         <li><a href="{% url 'task_management:delete' pk=object.pk %}">Delete task</a></li>
     </ul>
 
+    <h2>Task details:</h2>
+    <ul>
+        <li>Title: {{ task.title }}</li>
+        <li>description: {{ task.description }}</li>
+        <li>Author: {{ task.author }}</li>
+        <li>Assigner list: {{ task.assigned_to.all|join:', ' }}</li>
+        <li>Status: {{ task.get_status_display }}</li>
+        <li>Criticality: {{ task.get_criticality_display }}</li>
+        <li>Date due: {{ task.date_due }}</li>
+        <li>Time create: {{ task.time_create }}</li>
+        <li>Time update: {{ task.time_update }}</li>
 
-    qweqwe
+        <li>Attachments:
+            <ul>
+                {% for file in task.attachments.all %}
+                    <li><a href="{{ file.attachment.url }}">{{ file.attachment.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </li>
+    </ul>
 {% endblock %}
