@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from mptt.models import MPTTModel, TreeManyToManyField, TreeForeignKey
 
 
 class Task(models.Model):
@@ -37,9 +38,9 @@ class Task(models.Model):
     description = models.TextField('Description')
     author = models.ForeignKey(User, verbose_name='Author',
                                related_name='task_author')
-    assigned_to = models.ManyToManyField(User, blank=True,
-                                         verbose_name='Assigned to',
-                                         related_name='task_assigned')
+    assigned_to = TreeManyToManyField('TaskAssignUser', blank=True,
+                                      verbose_name='Assigned to',
+                                      related_name='task_assigned')
     status = models.SmallIntegerField('Status', choices=STATUS_CHOICES,
                                       default=STATUS_DRAFT)
     criticality = models.SmallIntegerField('Criticality',
@@ -54,6 +55,12 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class TaskAssignUser(MPTTModel):
+    user = models.OneToOneField(User, verbose_name='Assign user')
+    parent = TreeForeignKey('self', null=True, blank=True,
+                            related_name='children', db_index=True)
 
 
 class TaskDecline(models.Model):

@@ -124,6 +124,8 @@ MEDIA_ROOT = os.path.join(
 
 
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - START
+# enable django-mptt (hierarchical models)
+INSTALLED_APPS.append('mptt')
 # enable task management system
 INSTALLED_APPS.append('task_management')
 
