@@ -38,9 +38,10 @@ class Task(models.Model):
     description = models.TextField('Description')
     author = models.ForeignKey(User, verbose_name='Author',
                                related_name='task_author')
-    assigned_to = TreeManyToManyField('TaskAssignUser', blank=True,
-                                      verbose_name='Assigned to',
-                                      related_name='task_assigned')
+    assigned_to = models.ManyToManyField(
+        User, through='TaskAssignUser', blank=True,
+        verbose_name='Assigned to', related_name='task_assigned'
+    )
     status = models.SmallIntegerField('Status', choices=STATUS_CHOICES,
                                       default=STATUS_DRAFT)
     criticality = models.SmallIntegerField('Criticality',
@@ -58,9 +59,14 @@ class Task(models.Model):
 
 
 class TaskAssignUser(MPTTModel):
-    user = models.OneToOneField(User, verbose_name='Assign user')
+    """ Model for M2M link between Task and User models """
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
     parent = TreeForeignKey('self', null=True, blank=True,
                             related_name='children', db_index=True)
+
+    class Meta:
+        unique_together = ('user', 'task')
 
 
 class TaskDecline(models.Model):
