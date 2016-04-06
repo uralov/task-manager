@@ -13,9 +13,15 @@ class TaskFrom(forms.ModelForm):
         fields = ['title', 'description', 'criticality', 'date_due']
 
     attachments = MultiFileField(max_num=10, required=False)
-    assigned_to = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(), required=False
-    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = kwargs.get('instance')
+        if not instance or not TaskOwner.objects.filter(task=instance).exists():
+            self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
+                queryset=User.objects.all(),
+                required=False
+            )
 
     def save(self, commit=True):
         assigned_to = list(self.cleaned_data['assigned_to'])

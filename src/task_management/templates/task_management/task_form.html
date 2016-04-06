@@ -4,6 +4,11 @@
     <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
+
+        {% if task.owners %}
+            <p>Owner: {{ task.owners.last.user }}</p>
+        {% endif %}
         <input type="submit" value="Create" />
     </form>
+
 {% endblock %}
