@@ -12,8 +12,8 @@
     <ul>
         <li>Title: {{ task.title }}</li>
         <li>description: {{ task.description }}</li>
-        <li>Author: {{ task.author }}</li>
-        <li>Assigner list: {{ task.assigned_to.all|join:', ' }}</li>
+        <li>Creator: {{ task.creator }}</li>
+        <li>Owner: {{ task.owners.last }}</li>
         <li>Status: {{ task.get_status_display }}</li>
         <li>Criticality: {{ task.get_criticality_display }}</li>
         <li>Date due: {{ task.date_due }}</li>

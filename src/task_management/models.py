@@ -3,10 +3,10 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from mptt.models import MPTTModel, TreeManyToManyField, TreeForeignKey
+from mptt.models import MPTTModel, TreeForeignKey
 
 
-class Task(models.Model):
+class Task(MPTTModel):
     """ Task model """
     STATUS_DECLINED = 0
     STATUS_DRAFT = 1
@@ -33,17 +33,14 @@ class Task(models.Model):
         (CRITICALITY_MEDIUM, 'Medium'),
         (CRITICALITY_HIGH, 'High'),
     )
-
+    parent = TreeForeignKey('self', null=True, blank=True,
+                            related_name='children', db_index=True)
     title = models.CharField('Title', max_length=4096)
     description = models.TextField('Description')
-    author = models.ForeignKey(User, verbose_name='Author',
-                               related_name='task_author')
-    assigned_to = models.ManyToManyField(
-        User, through='TaskAssignUser', blank=True,
-        verbose_name='Assigned to', related_name='task_assigned'
-    )
+    creator = models.ForeignKey(User, verbose_name='Creator')
     status = models.SmallIntegerField('Status', choices=STATUS_CHOICES,
                                       default=STATUS_DRAFT)
+    status_description = models.TextField('Status description')
     criticality = models.SmallIntegerField('Criticality',
                                            choices=CRITICALITY_CHOICES,
                                            default=CRITICALITY_MEDIUM)
@@ -58,23 +55,23 @@ class Task(models.Model):
         return self.title
 
 
-class TaskAssignUser(MPTTModel):
-    """ Model for M2M link between Task and User models """
+class TaskOwner(MPTTModel):
+    """ Task owner model.
+    Stores chain of assignments of tasks to users
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE,
+                             related_name='owners')
     parent = TreeForeignKey('self', null=True, blank=True,
                             related_name='children', db_index=True)
+    time_assign = models.DateTimeField(auto_now_add=True)
+    assign_accept = models.NullBooleanField(verbose_name='Accept assign')
+    assign_description = models.TextField(verbose_name='Description',
+                                          blank=True, null=True)
 
     class Meta:
         unique_together = ('user', 'task')
-
-
-class TaskDecline(models.Model):
-    """ Declined tasks model """
-    task = models.ForeignKey(Task, related_name='declines',
-                             verbose_name='Declined task')
-    reason = models.TextField('Reason for decline')
-    time_decline = models.DateTimeField('Time of decline', auto_now_add=True)
+        ordering = ('time_assign', )
 
 
 class TaskAttachment(models.Model):

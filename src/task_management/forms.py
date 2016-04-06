@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 from multiupload.fields import MultiFileField
 
-from task_management.models import Task, TaskAttachment, TaskAssignUser
+from task_management.models import Task, TaskAttachment, TaskOwner
 
 
 class TaskFrom(forms.ModelForm):
@@ -13,26 +13,33 @@ class TaskFrom(forms.ModelForm):
         fields = ['title', 'description', 'criticality', 'date_due']
 
     attachments = MultiFileField(max_num=10, required=False)
-
-    def __init__(self, user, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        excluded_users = []
-        instance = kwargs['instance']
-        if instance:
-            assign = TaskAssignUser.objects.get(user=user, task=instance)
-            assign_children = assign.get_children()
-            excluded_users = instance.assigned_to.all()
-
-        self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
-            # queryset=User.objects.exclude(id__in=excluded_users),
-            queryset=User.objects.all(),
-            required=False
-        )
+    assigned_to = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(), required=False
+    )
 
     def save(self, commit=True):
-        instance = super().save(commit)
-        for each in self.cleaned_data['attachments']:
-            TaskAttachment.objects.create(attachment=each, task=instance)
+        assigned_to = list(self.cleaned_data['assigned_to'])
+        if assigned_to:
+            self.instance.status = Task.STATUS_PENDING
+        task = super().save(commit)
 
-        return instance
+        if assigned_to:
+            # Create owner for first task
+            TaskOwner.objects.create(user=assigned_to.pop(0), task=task)
+
+        for each in self.cleaned_data['attachments']:
+            TaskAttachment.objects.create(attachment=each, task=task)
+
+        for owner in assigned_to:
+            # create separate task for every assigned user except first
+            task_duplicate = task
+            task_duplicate.pk = None
+            task_duplicate.save()
+
+            TaskOwner.objects.create(user=owner, task=task_duplicate)
+
+            for each in self.cleaned_data['attachments']:
+                TaskAttachment.objects.create(attachment=each,
+                                              task=task_duplicate)
+
+        return task
