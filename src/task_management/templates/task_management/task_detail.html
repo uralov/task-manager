@@ -1,14 +1,23 @@
 {% extends 'task_management/base.html' %}
 
+
 {% block content %}
     <h1>Task detail view</h1>
     <a href="{% url 'task_management:list' %}">Task list</a>
     <ul>
         <li><a href="{% url 'task_management:update' pk=object.pk %}">Edit task</a></li>
         <li><a href="{% url 'task_management:delete' pk=object.pk %}">Delete task</a></li>
+        <li><a href="{% url 'task_management:sub_task_create' parent_pk=object.pk %}">
+            Sub task create
+        </a></li>
     </ul>
 
     <h2>Task details:</h2>
+    {% if task.parent %}
+        Parent task: <a href="{{ task.parent.get_absolute_url }}">
+            {{ task.parent.title }}
+        </a>
+    {% endif %}
     <ul>
         <li>Title: {{ task.title }}</li>
         <li>description: {{ task.description }}</li>

@@ -34,6 +34,16 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
+class SubTaskCreateView(TaskCreateView):
+    model = Task
+
+    def form_valid(self, form):
+        parent_task = Task.objects.get(pk=self.kwargs['parent_pk'])
+        form.instance.parent = parent_task
+
+        return super().form_valid(form)
+
+
 class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = Task
     form_class = TaskFrom

@@ -28,10 +28,11 @@ class TaskFrom(forms.ModelForm):
             TaskAttachment.objects.create(attachment=each, task=task)
 
     def save(self, commit=True):
-        assigned_to = list(self.cleaned_data['assigned_to'])
+        assigned_to = list(self.cleaned_data.get('assigned_to', []))
         if assigned_to:
             self.instance.status = Task.STATUS_PENDING
             self.instance.owner = assigned_to.pop(0)
+
         task = super().save()
         self._save_attachment(task)
 
