@@ -37,7 +37,10 @@ class Task(MPTTModel):
                             related_name='children', db_index=True)
     title = models.CharField('Title', max_length=4096)
     description = models.TextField('Description')
-    creator = models.ForeignKey(User, verbose_name='Creator')
+    creator = models.ForeignKey(User, verbose_name='Creator',
+                                related_name='created_tasks')
+    owner = models.ForeignKey(User, verbose_name='Owner',
+                              related_name='owned_tasks', blank=True, null=True)
     status = models.SmallIntegerField('Status', choices=STATUS_CHOICES,
                                       default=STATUS_DRAFT)
     status_description = models.TextField('Status description')
@@ -55,13 +58,13 @@ class Task(MPTTModel):
         return self.title
 
 
-class TaskOwner(MPTTModel):
+class TaskOwnerChain(MPTTModel):
     """ Task owner model.
     Stores chain of assignments of tasks to users
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE,
-                             related_name='owners')
+                             related_name='owners_chain')
     parent = TreeForeignKey('self', null=True, blank=True,
                             related_name='children', db_index=True)
     time_assign = models.DateTimeField(auto_now_add=True)

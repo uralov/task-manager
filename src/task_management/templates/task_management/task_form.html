@@ -5,8 +5,8 @@
         {% csrf_token %}
         {{ form.as_p }}
 
-        {% if task.owners %}
-            <p>Owner: {{ task.owners.last.user }}</p>
+        {% if task.owner %}
+            <p>Owner: {{ task.owner }}</p>
         {% endif %}
         <input type="submit" value="Create" />
     </form>

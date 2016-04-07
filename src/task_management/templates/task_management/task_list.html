@@ -7,7 +7,11 @@
     <h2>Created by me:</h2>
     <ul>
         {% for task in task_created %}
-            <li><a href="{{ task.get_absolute_url }}">{{ task.title }}</a></li>
+            <li><a href="{{ task.get_absolute_url }}">{{ task.title }}</a>
+                {% if task.owner %}
+                    (assigned to {{ task.owner }})
+                {% endif %}
+            </li>
         {% endfor %}
     </ul>
 

@@ -13,7 +13,7 @@
         <li>Title: {{ task.title }}</li>
         <li>description: {{ task.description }}</li>
         <li>Creator: {{ task.creator }}</li>
-        <li>Owner: {{ task.owners.last.user }}</li>
+        <li>Owner: {{ task.owner }}</li>
         <li>Status: {{ task.get_status_display }}</li>
         <li>Criticality: {{ task.get_criticality_display }}</li>
         <li>Date due: {{ task.date_due }}</li>

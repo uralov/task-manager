@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 from multiupload.fields import MultiFileField
 
-from task_management.models import Task, TaskAttachment, TaskOwner
+from task_management.models import Task, TaskAttachment
 
 
 class TaskFrom(forms.ModelForm):
@@ -17,35 +17,30 @@ class TaskFrom(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         instance = kwargs.get('instance')
-        if not instance or not TaskOwner.objects.filter(task=instance).exists():
+        if not instance or not instance.owner:
             self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
                 queryset=User.objects.all(),
                 required=False
             )
 
+    def _save_attachment(self, task):
+        for each in self.cleaned_data['attachments']:
+            TaskAttachment.objects.create(attachment=each, task=task)
+
     def save(self, commit=True):
         assigned_to = list(self.cleaned_data['assigned_to'])
         if assigned_to:
             self.instance.status = Task.STATUS_PENDING
-        task = super().save(commit)
-
-        if assigned_to:
-            # Create owner for first task
-            TaskOwner.objects.create(user=assigned_to.pop(0), task=task)
-
-        for each in self.cleaned_data['attachments']:
-            TaskAttachment.objects.create(attachment=each, task=task)
+            self.instance.owner = assigned_to.pop(0)
+        task = super().save()
+        self._save_attachment(task)
 
         for owner in assigned_to:
             # create separate task for every assigned user except first
             task_duplicate = task
             task_duplicate.pk = None
+            task_duplicate.owner = owner
             task_duplicate.save()
-
-            TaskOwner.objects.create(user=owner, task=task_duplicate)
-
-            for each in self.cleaned_data['attachments']:
-                TaskAttachment.objects.create(attachment=each,
-                                              task=task_duplicate)
+            self._save_attachment(task_duplicate)
 
         return task
