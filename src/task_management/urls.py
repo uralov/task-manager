@@ -2,8 +2,8 @@ from django.conf.urls import url
 
 from task_management.views import (
     TaskListView, TaskCreateView, TaskUpdateView, TaskDetailView,
-    TaskDeleteView,
-    SubTaskCreateView)
+    TaskDeleteView, SubTaskCreateView, CommentCreateView
+)
 
 
 urlpatterns = [
@@ -15,4 +15,7 @@ urlpatterns = [
 
     url(r'^sub_task_create/(?P<parent_pk>[0-9]+)/',
         SubTaskCreateView.as_view(), name='sub_task_create'),
+
+    url(r'^comment_create/(?P<task_pk>[0-9]+)/', CommentCreateView.as_view(),
+        name='comment_create'),
 ]

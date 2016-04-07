@@ -1,11 +1,11 @@
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
 )
 
-from task_management.forms import TaskFrom
-from task_management.models import Task
+from task_management.forms import TaskForm, CommentForm
+from task_management.models import Task, TaskComment
 
 
 class TaskListView(LoginRequiredMixin, ListView):
@@ -27,7 +27,7 @@ class TaskListView(LoginRequiredMixin, ListView):
 
 class TaskCreateView(LoginRequiredMixin, CreateView):
     model = Task
-    form_class = TaskFrom
+    form_class = TaskForm
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
@@ -35,8 +35,6 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
 
 class SubTaskCreateView(TaskCreateView):
-    model = Task
-
     def form_valid(self, form):
         parent_task = Task.objects.get(pk=self.kwargs['parent_pk'])
         form.instance.parent = parent_task
@@ -46,13 +44,34 @@ class SubTaskCreateView(TaskCreateView):
 
 class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = Task
-    form_class = TaskFrom
+    form_class = TaskForm
 
 
 class TaskDetailView(LoginRequiredMixin, DetailView):
     model = Task
 
+    def get_context_data(self, **kwargs):
+        kwargs['comment_form'] = CommentForm()
+        kwargs['comments'] = TaskComment.objects.filter(task=self.object)\
+            .prefetch_related('author')
+        return super().get_context_data(**kwargs)
+
 
 class TaskDeleteView(LoginRequiredMixin, DeleteView):
     model = Task
     success_url = reverse_lazy('task_management:list')
+
+
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = TaskComment
+    form_class = CommentForm
+
+    def form_valid(self, form):
+        form.instance.task = Task.objects.get(pk=self.kwargs['task_pk'])
+        form.instance.author = self.request.user
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('task_management:detail',
+                       kwargs={'pk': self.kwargs['task_pk']})

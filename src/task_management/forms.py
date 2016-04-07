@@ -3,10 +3,10 @@ from django.contrib.auth.models import User
 
 from multiupload.fields import MultiFileField
 
-from task_management.models import Task, TaskAttachment
+from task_management.models import Task, TaskAttachment, TaskComment
 
 
-class TaskFrom(forms.ModelForm):
+class TaskForm(forms.ModelForm):
     """ Form for creating task """
     class Meta:
         model = Task
@@ -45,3 +45,10 @@ class TaskFrom(forms.ModelForm):
             self._save_attachment(task_duplicate)
 
         return task
+
+
+class CommentForm(forms.ModelForm):
+    """ Form for comments """
+    class Meta:
+        model = TaskComment
+        fields = ['message', ]
