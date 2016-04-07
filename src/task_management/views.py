@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseForbidden
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
 )
@@ -60,6 +61,12 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
 class TaskDeleteView(LoginRequiredMixin, DeleteView):
     model = Task
     success_url = reverse_lazy('task_management:list')
+
+    def post(self, request, *args, **kwargs):
+        if self.request.user == self.object.creator:
+            return super().post(request, *args, **kwargs)
+
+        return HttpResponseForbidden()
 
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
