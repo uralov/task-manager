@@ -18,11 +18,18 @@ class TaskForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        instance = kwargs.get('instance')
-        if not instance or not instance.owner:
+        task = kwargs.get('instance')
+        if not task or not task.owner:
             self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
                 queryset=User.objects.all(),
                 required=False
+            )
+
+        if task and Task.is_status_can_change(task.status):
+            self.fields['status'] = forms.ChoiceField(
+                choices=[i for i in Task.STATUS_CHOICES
+                         if Task.is_status_can_change(i[0])],
+                initial=task.status
             )
 
     def _save_attachment(self, task):
@@ -30,6 +37,10 @@ class TaskForm(forms.ModelForm):
             TaskAttachment.objects.create(attachment=each, task=task)
 
     def save(self, commit=True):
+        status = self.cleaned_data.get('status')
+        if status:
+            self.instance.status = status
+
         assigned_to = list(self.cleaned_data.get('assigned_to', []))
         if assigned_to:
             self.instance.status = Task.STATUS_PENDING

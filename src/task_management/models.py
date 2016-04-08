@@ -15,6 +15,7 @@ class Task(MPTTModel):
     STATUS_HALF_DONE = 4
     STATUS_ALMOST_DONE = 5
     STATUS_COMPLETE = 6
+    STATUS_APPROVE = 7
     STATUS_CHOICES = (
         (STATUS_DECLINED, 'Declined'),
         (STATUS_DRAFT, 'Draft'),
@@ -23,6 +24,7 @@ class Task(MPTTModel):
         (STATUS_HALF_DONE, 'Half Way Done'),
         (STATUS_ALMOST_DONE, 'Almost Done'),
         (STATUS_COMPLETE, 'Completed'),
+        (STATUS_APPROVE, 'Approve'),
     )
 
     CRITICALITY_LOW = 0
@@ -58,6 +60,10 @@ class Task(MPTTModel):
         return TaskAssignedUser.objects.get(
             user=self.owner, task=self
         ).assign_accept
+
+    @staticmethod
+    def is_status_can_change(status):
+        return Task.STATUS_PENDING < status < Task.STATUS_APPROVE
 
     def __str__(self):
         return self.title
