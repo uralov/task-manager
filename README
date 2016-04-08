@@ -1,0 +1,12 @@
+# README #
+
+### How do I get set up? ###
+
+* clone project `git clone https://Listener@bitbucket.org/Listener/task_management.git`
+* go to the root of the project
+* setup requirements from requirements.txt `pip install -r requirements.txt`
+* go to the src directory `cd src`
+* migrate database `python manage.py migrate`
+* create superuser `python manage.py createsuperuser`
+* collect static `python manage.py collectstatic`
+* run developer server `python manage.py runserver`

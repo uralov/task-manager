@@ -14,7 +14,7 @@ urlpatterns = [
     url(r'^(?P<pk>[0-9]+)/update/$', TaskUpdateView.as_view(), name='update'),
     url(r'^(?P<pk>[0-9]+)/delete/$', TaskDeleteView.as_view(), name='delete'),
 
-    url(r'^(?P<parent_pk>[0-9]+)/sub_task_create/$',
+    url(r'^(?P<pk>[0-9]+)/sub_task_create/$',
         SubTaskCreateView.as_view(), name='sub_task_create'),
 
     url(r'^(?P<task_pk>[0-9]+)/comment_create/$', CommentCreateView.as_view(),

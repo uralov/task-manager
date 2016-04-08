@@ -7,7 +7,7 @@
     <ul>
         {% if user == object.creator or user == object.owner and object.owner_accept_task %}
             <li><a href="{% url 'task_management:update' pk=object.pk %}">Edit task</a></li>
-            <li><a href="{% url 'task_management:sub_task_create' parent_pk=object.pk %}">
+            <li><a href="{% url 'task_management:sub_task_create' pk=object.pk %}">
                 Sub task create
             </a></li>
         {% endif %}
