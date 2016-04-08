@@ -64,9 +64,7 @@ class Task(MPTTModel):
 
 
 class TaskAssignedUser(MPTTModel):
-    """ Task owner model.
-    Stores chain of assignments of tasks to users
-    """
+    """ Stores chain of assignments of tasks to users """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE,
                              related_name='owners_chain')

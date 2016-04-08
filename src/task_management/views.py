@@ -58,6 +58,8 @@ class TaskDetailView(TaskViewPermitMixin, DetailView):
         kwargs['comment_form'] = CommentForm()
         kwargs['comments'] = TaskComment.objects.filter(task=self.object)\
             .prefetch_related('author')
+        kwargs['task_assigned_to'] = TaskAssignedUser.objects.filter(
+            task=self.object)
         return super().get_context_data(**kwargs)
 
 

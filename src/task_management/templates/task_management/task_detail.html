@@ -1,5 +1,5 @@
 {% extends 'task_management/base.html' %}
-
+{% load mptt_tags %}
 
 {% block content %}
     <h1>Task detail view</h1>
@@ -48,6 +48,23 @@
                 {% endfor %}
             </ul>
         </li>
+    </ul>
+
+    <h3>Assign to:</h3>
+    <ul class="root">
+        {% recursetree task_assigned_to %}
+            <li>
+                user: {{ node.user }} - {{ node.assign_accept|yesno:"Accept,Reject,Pending" }} task
+                {% if node.assign_description %}
+                    ({{ node.assign_description }})
+                {% endif %}
+                {% if not node.is_leaf_node %}
+                    <ul class="children">
+                        {{ children }}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endrecursetree %}
     </ul>
 
     {% include 'task_management/comment_list.html' %}
