@@ -8,3 +8,4 @@
 * create superuser `python manage.py createsuperuser`
 * collect static `python manage.py collectstatic`
 * run developer server `python manage.py runserver`
+* if you use production server, change `settings.DEBUG = False`
