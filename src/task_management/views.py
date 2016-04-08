@@ -6,6 +6,9 @@ from django.views.generic import (
 
 from task_management.forms import TaskForm, CommentForm
 from task_management.models import Task, TaskComment
+from task_management.mixins import (
+    TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin
+)
 
 
 class TaskListView(LoginRequiredMixin, ListView):
@@ -34,7 +37,7 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class SubTaskCreateView(TaskCreateView):
+class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
     def form_valid(self, form):
         parent_task = Task.objects.get(pk=self.kwargs['parent_pk'])
         form.instance.parent = parent_task
@@ -42,12 +45,12 @@ class SubTaskCreateView(TaskCreateView):
         return super().form_valid(form)
 
 
-class TaskUpdateView(LoginRequiredMixin, UpdateView):
+class TaskUpdateView(TaskChangePermitMixin, UpdateView):
     model = Task
     form_class = TaskForm
 
 
-class TaskDetailView(LoginRequiredMixin, DetailView):
+class TaskDetailView(TaskViewPermitMixin, DetailView):
     model = Task
 
     def get_context_data(self, **kwargs):
@@ -57,7 +60,7 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
         return super().get_context_data(**kwargs)
 
 
-class TaskDeleteView(LoginRequiredMixin, DeleteView):
+class TaskDeleteView(TaskDeletePermitMixin, DeleteView):
     model = Task
     success_url = reverse_lazy('task_management:list')
 

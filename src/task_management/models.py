@@ -54,6 +54,11 @@ class Task(MPTTModel):
     def get_absolute_url(self):
         return reverse('task_management:detail', kwargs={'pk': self.pk})
 
+    def owner_accept_task(self):
+        return TaskOwnerChain.objects.filter(
+            user=self.owner, task=self, assign_accept=True
+        ).exists()
+
     def __str__(self):
         return self.title
 
