@@ -18,7 +18,9 @@
             <li><a href="{% url 'task_management:accept' task_pk=object.pk %}">
                 Accept task
             </a></li>
-            <li><a href="">Reject task</a></li>
+            <li><a href="{% url 'task_management:reject' task_pk=object.pk %}">
+                Reject task
+            </a></li>
         {% endif %}
     </ul>
 

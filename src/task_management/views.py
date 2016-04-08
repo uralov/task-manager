@@ -5,7 +5,7 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView, View
 )
 
-from task_management.forms import TaskForm, CommentForm
+from task_management.forms import TaskForm, CommentForm, RejectTaskForm
 from task_management.models import Task, TaskComment, TaskAssignedUser
 from task_management.mixins import (
     TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin,
@@ -82,16 +82,8 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
 
 
 class AcceptTaskView(TaskAcceptPermitMixin, View):
-    object = None
-
-    def get_object(self):
-        if not self.object:
-            self.object = Task.objects.get(pk=self.kwargs['task_pk'])
-
-        return self.object
-
     def get(self, *args, **kwargs):
-        task = self.get_object()
+        task = self.get_task()
         assign, created = TaskAssignedUser.objects.get_or_create(
             task=task, user=task.owner
         )
@@ -99,3 +91,17 @@ class AcceptTaskView(TaskAcceptPermitMixin, View):
         assign.save()
 
         return redirect(task)
+
+
+class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
+    model = TaskAssignedUser
+    form_class = RejectTaskForm
+    template_name = 'task_management/task_reject_form.html'
+
+    def get_object(self, queryset=None):
+        return self.model.objects.get(task=self.get_task(),
+                                      user=self.request.user)
+
+    def get_success_url(self):
+        return reverse('task_management:detail',
+                       kwargs={'pk': self.kwargs['task_pk']})

@@ -3,7 +3,9 @@ from django.contrib.auth.models import User
 
 from multiupload.fields import MultiFileField
 
-from task_management.models import Task, TaskAttachment, TaskComment
+from task_management.models import (
+    Task, TaskAttachment, TaskComment, TaskAssignedUser
+)
 
 
 class TaskForm(forms.ModelForm):
@@ -52,3 +54,15 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = TaskComment
         fields = ['message', ]
+
+
+class RejectTaskForm(forms.ModelForm):
+    """ Form for reject task """
+    class Meta:
+        model = TaskAssignedUser
+        fields = ['assign_description', ]
+
+    def save(self, commit=True):
+        self.instance.assign_accept = False
+
+        return super().save(commit)

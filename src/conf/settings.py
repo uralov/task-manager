@@ -115,6 +115,9 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(
     os.path.dirname(BASE_DIR), 'public', 'static'
 )
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'task_management', 'static'),
+)
 
 # Media files (user content)
 MEDIA_URL = '/media/'

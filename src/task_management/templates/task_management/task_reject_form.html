@@ -1,0 +1,10 @@
+{% extends 'task_management/base.html' %}
+
+{% block content %}
+    <form action="{% url 'task_management:reject' task_pk=object.task.pk %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <input type="submit" value="Reject" />
+    </form>
+{% endblock %}

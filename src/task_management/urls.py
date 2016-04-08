@@ -3,7 +3,7 @@ from django.conf.urls import url
 from task_management.views import (
     TaskListView, TaskCreateView, TaskUpdateView, TaskDetailView,
     TaskDeleteView, SubTaskCreateView, CommentCreateView,
-    AcceptTaskView
+    AcceptTaskView, RejectTaskView
 )
 
 
@@ -22,4 +22,6 @@ urlpatterns = [
 
     url(r'^(?P<task_pk>[0-9]+)/accept/$', AcceptTaskView.as_view(),
         name='accept'),
+    url(r'^(?P<task_pk>[0-9]+)/reject/$', RejectTaskView.as_view(),
+        name='reject'),
 ]
