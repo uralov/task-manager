@@ -1,14 +1,15 @@
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
 from django.views.generic import (
-    ListView, CreateView, UpdateView, DetailView, DeleteView
+    ListView, CreateView, UpdateView, DetailView, DeleteView, View
 )
 
 from task_management.forms import TaskForm, CommentForm
-from task_management.models import Task, TaskComment
+from task_management.models import Task, TaskComment, TaskAssignedUser
 from task_management.mixins import (
-    TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin
-)
+    TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin,
+    TaskAcceptPermitMixin)
 
 
 class TaskListView(LoginRequiredMixin, ListView):
@@ -78,3 +79,23 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse('task_management:detail',
                        kwargs={'pk': self.kwargs['task_pk']})
+
+
+class AcceptTaskView(TaskAcceptPermitMixin, View):
+    object = None
+
+    def get_object(self):
+        if not self.object:
+            self.object = Task.objects.get(pk=self.kwargs['task_pk'])
+
+        return self.object
+
+    def get(self, *args, **kwargs):
+        task = self.get_object()
+        assign, created = TaskAssignedUser.objects.get_or_create(
+            task=task, user=task.owner
+        )
+        assign.assign_accept = True
+        assign.save()
+
+        return redirect(task)

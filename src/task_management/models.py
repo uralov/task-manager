@@ -55,15 +55,15 @@ class Task(MPTTModel):
         return reverse('task_management:detail', kwargs={'pk': self.pk})
 
     def owner_accept_task(self):
-        return TaskOwnerChain.objects.filter(
-            user=self.owner, task=self, assign_accept=True
-        ).exists()
+        return TaskAssignedUser.objects.get(
+            user=self.owner, task=self
+        ).assign_accept
 
     def __str__(self):
         return self.title
 
 
-class TaskOwnerChain(MPTTModel):
+class TaskAssignedUser(MPTTModel):
     """ Task owner model.
     Stores chain of assignments of tasks to users
     """

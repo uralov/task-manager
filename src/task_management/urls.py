@@ -2,20 +2,24 @@ from django.conf.urls import url
 
 from task_management.views import (
     TaskListView, TaskCreateView, TaskUpdateView, TaskDetailView,
-    TaskDeleteView, SubTaskCreateView, CommentCreateView
+    TaskDeleteView, SubTaskCreateView, CommentCreateView,
+    AcceptTaskView
 )
 
 
 urlpatterns = [
     url(r'^$', TaskListView.as_view(), name='list'),
-    url(r'^create/', TaskCreateView.as_view(), name='create'),
-    url(r'^detail/(?P<pk>[0-9]+)/', TaskDetailView.as_view(), name='detail'),
-    url(r'^update/(?P<pk>[0-9]+)/', TaskUpdateView.as_view(), name='update'),
-    url(r'^delete/(?P<pk>[0-9]+)/', TaskDeleteView.as_view(), name='delete'),
+    url(r'^create/$', TaskCreateView.as_view(), name='create'),
+    url(r'^(?P<pk>[0-9]+)/$', TaskDetailView.as_view(), name='detail'),
+    url(r'^(?P<pk>[0-9]+)/update/$', TaskUpdateView.as_view(), name='update'),
+    url(r'^(?P<pk>[0-9]+)/delete/$', TaskDeleteView.as_view(), name='delete'),
 
-    url(r'^sub_task_create/(?P<parent_pk>[0-9]+)/',
+    url(r'^(?P<parent_pk>[0-9]+)/sub_task_create/$',
         SubTaskCreateView.as_view(), name='sub_task_create'),
 
-    url(r'^comment_create/(?P<task_pk>[0-9]+)/', CommentCreateView.as_view(),
+    url(r'^(?P<task_pk>[0-9]+)/comment_create/$', CommentCreateView.as_view(),
         name='comment_create'),
+
+    url(r'^(?P<task_pk>[0-9]+)/accept/$', AcceptTaskView.as_view(),
+        name='accept'),
 ]

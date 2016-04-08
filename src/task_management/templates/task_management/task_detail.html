@@ -7,13 +7,19 @@
     <ul>
         {% if user == object.creator or user == object.owner and object.owner_accept_task %}
             <li><a href="{% url 'task_management:update' pk=object.pk %}">Edit task</a></li>
+            <li><a href="{% url 'task_management:sub_task_create' parent_pk=object.pk %}">
+                Sub task create
+            </a></li>
         {% endif %}
         {% if user == object.creator %}
             <li><a href="{% url 'task_management:delete' pk=object.pk %}">Delete task</a></li>
         {% endif %}
-        <li><a href="{% url 'task_management:sub_task_create' parent_pk=object.pk %}">
-            Sub task create
-        </a></li>
+        {% if user == object.owner and object.owner_accept_task == None %}
+            <li><a href="{% url 'task_management:accept' task_pk=object.pk %}">
+                Accept task
+            </a></li>
+            <li><a href="">Reject task</a></li>
+        {% endif %}
     </ul>
 
     <h2>Task details:</h2>
