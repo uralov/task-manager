@@ -18,11 +18,11 @@ class TaskListView(LoginRequiredMixin, ListView):
     context_object_name = 'tasks_assigned'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super(TaskListView, self).get_queryset()
         return queryset.filter(owner=self.request.user)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super(TaskListView, self).get_context_data(**kwargs)
         context['task_created'] = Task.objects.filter(
             creator=self.request.user
         )
@@ -35,7 +35,7 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        return super().form_valid(form)
+        return super(TaskCreateView, self).form_valid(form)
 
 
 class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
@@ -43,7 +43,7 @@ class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
         parent_task = Task.objects.get(pk=self.kwargs['pk'])
         form.instance.parent = parent_task
 
-        return super().form_valid(form)
+        return super(SubTaskCreateView, self).form_valid(form)
 
 
 class TaskUpdateView(TaskChangePermitMixin, UpdateView):
@@ -60,7 +60,7 @@ class TaskDetailView(TaskViewPermitMixin, DetailView):
             .prefetch_related('author')
         kwargs['task_assigned_to'] = TaskAssignedUser.objects.filter(
             task=self.object)
-        return super().get_context_data(**kwargs)
+        return super(TaskDetailView, self).get_context_data(**kwargs)
 
 
 class TaskDeleteView(TaskDeletePermitMixin, DeleteView):
@@ -76,7 +76,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         form.instance.task = Task.objects.get(pk=self.kwargs['task_pk'])
         form.instance.author = self.request.user
 
-        return super().form_valid(form)
+        return super(CommentCreateView, self).form_valid(form)
 
     def get_success_url(self):
         return reverse('task_management:detail',

@@ -14,7 +14,7 @@ class TaskChangePermitMixin(LoginRequiredMixin):
             request.user == task.owner and task.owner_accept_task()
         )
         if request.user == task.creator or is_owner_and_accept_task:
-            return super().dispatch(request, *args, **kwargs)
+            return super(TaskChangePermitMixin, self).dispatch(request, *args, **kwargs)
 
         return HttpResponseForbidden()
 
@@ -29,7 +29,9 @@ class TaskViewPermitMixin(LoginRequiredMixin):
             .prefetch_related('user')
         owners = (obj.user for obj in task_owner_chain)
         if request.user == task.creator or request.user in owners:
-            return super().dispatch(request, *args, **kwargs)
+            return super(TaskViewPermitMixin,self).dispatch(
+                request, *args, **kwargs
+            )
 
         return HttpResponseForbidden()
 
@@ -41,7 +43,9 @@ class TaskDeletePermitMixin(LoginRequiredMixin):
         # only task creator can delete task
         task = self.get_object()
         if request.user == task.creator:
-            return super().dispatch(request, *args, **kwargs)
+            return super(TaskDeletePermitMixin, self).dispatch(
+                request, *args, **kwargs
+            )
 
         return HttpResponseForbidden()
 
@@ -60,6 +64,8 @@ class TaskAcceptPermitMixin(LoginRequiredMixin):
         # only task owner can accept/reject task
         task = self.get_task()
         if request.user == task.owner and task.owner_accept_task() is None:
-            return super().dispatch(request, *args, **kwargs)
+            return super(TaskAcceptPermitMixin, self).dispatch(
+                request, *args, **kwargs
+            )
 
         return HttpResponseForbidden()

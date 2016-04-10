@@ -31,9 +31,9 @@ class Task(MPTTModel):
     CRITICALITY_MEDIUM = 1
     CRITICALITY_HIGH = 2
     CRITICALITY_CHOICES = (
-        (CRITICALITY_LOW, 'Low'),
-        (CRITICALITY_MEDIUM, 'Medium'),
         (CRITICALITY_HIGH, 'High'),
+        (CRITICALITY_MEDIUM, 'Medium'),
+        (CRITICALITY_LOW, 'Low'),
     )
     parent = TreeForeignKey('self', null=True, blank=True,
                             related_name='children', db_index=True)

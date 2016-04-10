@@ -22,7 +22,7 @@ def create_task_assign_chain(sender, instance, **kwargs):
 @receiver(post_save, sender=TaskAssignedUser)
 def change_assign_status(sender, instance, **kwargs):
     """ Change task status if user accept or reject assign """
-    task = instance.task
+    task = Task.objects.get(pk=instance.task.pk)
 
     if instance.assign_accept is True:
         task.status = Task.STATUS_WORKING

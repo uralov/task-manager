@@ -17,7 +17,7 @@ class TaskForm(forms.ModelForm):
     attachments = MultiFileField(max_num=10, required=False)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(TaskForm, self).__init__(*args, **kwargs)
         task = kwargs.get('instance')
         if not task or not task.owner:
             self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
@@ -46,7 +46,7 @@ class TaskForm(forms.ModelForm):
             self.instance.status = Task.STATUS_PENDING
             self.instance.owner = assigned_to.pop(0)
 
-        task = super().save()
+        task = super(TaskForm, self).save()
         self._save_attachment(task)
 
         for owner in assigned_to:
@@ -76,4 +76,4 @@ class RejectTaskForm(forms.ModelForm):
     def save(self, commit=True):
         self.instance.assign_accept = False
 
-        return super().save(commit)
+        return super(RejectTaskForm, self).save(commit)
