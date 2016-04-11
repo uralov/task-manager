@@ -3,8 +3,8 @@ from django.conf.urls import url
 from task_management.views import (
     TaskListView, TaskCreateView, TaskUpdateView, TaskDetailView,
     TaskDeleteView, SubTaskCreateView, CommentCreateView,
-    AcceptTaskView, RejectTaskView
-)
+    AcceptTaskView, RejectTaskView,
+    ApproveTaskView, DeclineTaskView)
 
 
 urlpatterns = [
@@ -24,4 +24,9 @@ urlpatterns = [
         name='accept'),
     url(r'^(?P<task_pk>[0-9]+)/reject/$', RejectTaskView.as_view(),
         name='reject'),
+
+    url(r'^(?P<pk>[0-9]+)/approve/$', ApproveTaskView.as_view(),
+        name='approve'),
+    url(r'^(?P<pk>[0-9]+)/decline/$', DeclineTaskView.as_view(),
+        name='decline'),
 ]

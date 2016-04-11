@@ -69,3 +69,18 @@ class TaskAcceptPermitMixin(LoginRequiredMixin):
             )
 
         return HttpResponseForbidden()
+
+
+class TaskApprovePermitMixin(LoginRequiredMixin):
+    """ Mixin which verifies that the current user can approve/decline task.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        # only task owner can approve/decline task if status = 'complete'
+        task = self.get_object()
+        if request.user == task.creator and task.status == task.STATUS_COMPLETE:
+            return super(TaskApprovePermitMixin, self).dispatch(
+                request, *args, **kwargs
+            )
+
+        return HttpResponseForbidden()

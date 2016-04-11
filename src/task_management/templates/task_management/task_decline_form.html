@@ -1,10 +1,10 @@
 {% extends 'task_management/base.html' %}
 
 {% block content %}
-    <form action="{% url 'task_management:reject' object.task.pk %}" method="post">
+    <form action="{% url 'task_management:decline' object.pk %}" method="post">
         {% csrf_token %}
         {{ form.as_p }}
 
-        <input type="submit" value="Reject" />
+        <input type="submit" value="Decline" />
     </form>
 {% endblock %}

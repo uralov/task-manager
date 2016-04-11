@@ -6,20 +6,28 @@
     <a href="{% url 'task_management:list' %}">Task list</a>
     <ul>
         {% if user == object.creator or user == object.owner and object.owner_accept_task %}
-            <li><a href="{% url 'task_management:update' pk=object.pk %}">Edit task</a></li>
-            <li><a href="{% url 'task_management:sub_task_create' pk=object.pk %}">
+            <li><a href="{% url 'task_management:update' object.pk %}">Edit task</a></li>
+            <li><a href="{% url 'task_management:sub_task_create' object.pk %}">
                 Sub task create
             </a></li>
         {% endif %}
         {% if user == object.creator %}
-            <li><a href="{% url 'task_management:delete' pk=object.pk %}">Delete task</a></li>
+            <li><a href="{% url 'task_management:delete' object.pk %}">Delete task</a></li>
         {% endif %}
+
         {% if user == object.owner and object.owner_accept_task == None %}
-            <li><a href="{% url 'task_management:accept' task_pk=object.pk %}">
+            <li><a href="{% url 'task_management:accept' object.pk %}">
                 Accept task
             </a></li>
-            <li><a href="{% url 'task_management:reject' task_pk=object.pk %}">
+            <li><a href="{% url 'task_management:reject' object.pk %}">
                 Reject task
+            </a></li>
+        {% elif object.status == object.STATUS_COMPLETE and user == object.creator %}
+            <li><a href="{% url 'task_management:approve' object.pk %}">
+                Approve task
+            </a></li>
+            <li><a href="{% url 'task_management:decline' object.pk %}">
+                Decline task
             </a></li>
         {% endif %}
     </ul>
@@ -36,6 +44,9 @@
         <li>Creator: {{ task.creator }}</li>
         <li>Owner: {{ task.owner }}</li>
         <li>Status: {{ task.get_status_display }}</li>
+        {% if task.status == task.STATUS_DECLINED %}
+            <li>Decline description: {{ task.status_description }}</li>
+        {% endif %}
         <li>Criticality: {{ task.get_criticality_display }}</li>
         <li>Date due: {{ task.date_due }}</li>
         <li>Time create: {{ task.time_create }}</li>

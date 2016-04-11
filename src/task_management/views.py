@@ -5,11 +5,12 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView, View
 )
 
-from task_management.forms import TaskForm, CommentForm, RejectTaskForm
+from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
+    DeclineTaskForm
 from task_management.models import Task, TaskComment, TaskAssignedUser
 from task_management.mixins import (
     TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin,
-    TaskAcceptPermitMixin)
+    TaskAcceptPermitMixin, TaskApprovePermitMixin)
 
 
 class TaskListView(LoginRequiredMixin, ListView):
@@ -107,3 +108,30 @@ class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
     def get_success_url(self):
         return reverse('task_management:detail',
                        kwargs={'pk': self.kwargs['task_pk']})
+
+
+class ApproveTaskView(TaskApprovePermitMixin, View):
+    object = None
+
+    def get_object(self):
+        if not self.object:
+            self.object = Task.objects.get(pk=self.kwargs['pk'])
+
+        return self.object
+
+    def get(self, *args, **kwargs):
+        task = self.get_object()
+        task.status = Task.STATUS_APPROVE
+        task.save()
+
+        return redirect(task)
+
+
+class DeclineTaskView(TaskApprovePermitMixin, UpdateView):
+    model = Task
+    form_class = DeclineTaskForm
+    template_name = 'task_management/task_decline_form.html'
+
+    def get_success_url(self):
+        return reverse('task_management:detail',
+                       kwargs={'pk': self.kwargs['pk']})

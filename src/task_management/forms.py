@@ -77,3 +77,15 @@ class RejectTaskForm(forms.ModelForm):
         self.instance.assign_accept = False
 
         return super(RejectTaskForm, self).save(commit)
+
+
+class DeclineTaskForm(forms.ModelForm):
+    """ From for decline task """
+    class Meta:
+        model = Task
+        fields = ['status_description', ]
+
+    def save(self, commit=True):
+        self.instance.status = Task.STATUS_DECLINED
+
+        return super(DeclineTaskForm, self).save(commit)
