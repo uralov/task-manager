@@ -10,11 +10,11 @@ class TaskChangePermitMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         # only creator and owner accepted task can update task
         task = self.get_object()
-        is_owner_and_accept_task = (
-            request.user == task.owner and task.owner_accept_task()
-        )
-        if request.user == task.creator or is_owner_and_accept_task:
-            return super(TaskChangePermitMixin, self).dispatch(request, *args, **kwargs)
+        user = request.user
+        if user == task.creator or user in task.get_owners_chain(True):
+            return super(TaskChangePermitMixin, self).dispatch(
+                request, *args, **kwargs
+            )
 
         return HttpResponseForbidden()
 
@@ -25,11 +25,8 @@ class TaskViewPermitMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         # only creator and contributors can view task
         task = self.get_object()
-        task_owner_chain = TaskAssignedUser.objects.filter(task=task) \
-            .prefetch_related('user')
-        owners = (obj.user for obj in task_owner_chain)
-        if request.user == task.creator or request.user in owners:
-            return super(TaskViewPermitMixin,self).dispatch(
+        if request.user == task.creator or request.user in task.owners.all():
+            return super(TaskViewPermitMixin, self).dispatch(
                 request, *args, **kwargs
             )
 
@@ -63,7 +60,7 @@ class TaskAcceptPermitMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         # only task owner can accept/reject task
         task = self.get_task()
-        if request.user == task.owner and task.owner_accept_task() is None:
+        if request.user == task.owner and task.is_owner_accept_task() is None:
             return super(TaskAcceptPermitMixin, self).dispatch(
                 request, *args, **kwargs
             )

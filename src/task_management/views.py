@@ -20,7 +20,7 @@ class TaskListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super(TaskListView, self).get_queryset()
-        return queryset.filter(owner=self.request.user)
+        return queryset.filter(owners=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super(TaskListView, self).get_context_data(**kwargs)
@@ -59,8 +59,7 @@ class TaskDetailView(TaskViewPermitMixin, DetailView):
         kwargs['comment_form'] = CommentForm()
         kwargs['comments'] = TaskComment.objects.filter(task=self.object)\
             .prefetch_related('author')
-        kwargs['task_assigned_to'] = TaskAssignedUser.objects.filter(
-            task=self.object)
+        kwargs['task_assigned_to'] = self.object.get_owners_chain()
         return super(TaskDetailView, self).get_context_data(**kwargs)
 
 
@@ -87,9 +86,8 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
 class AcceptTaskView(TaskAcceptPermitMixin, View):
     def get(self, *args, **kwargs):
         task = self.get_task()
-        assign, created = TaskAssignedUser.objects.get_or_create(
-            task=task, user=task.owner
-        )
+        assign = TaskAssignedUser.objects.get(task=task,
+                                              user=self.request.user)
         assign.assign_accept = True
         assign.save()
 
