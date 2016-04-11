@@ -41,9 +41,13 @@ class Task(MPTTModel):
     description = models.TextField('Description')
     creator = models.ForeignKey(User, verbose_name='Creator',
                                 related_name='created_tasks')
+    owner = models.ForeignKey(
+        User, verbose_name='Owner', related_name='owned_tasks',
+        blank=True, null=True
+    )
     owners = TreeManyToManyField(
         User, verbose_name='Owners', through='TaskAssignedUser',
-        related_name='owned_tasks', blank=True, null=True
+        blank=True, null=True
     )
     status = models.SmallIntegerField('Status', choices=STATUS_CHOICES,
                                       default=STATUS_DRAFT)
@@ -74,20 +78,8 @@ class Task(MPTTModel):
 
         return [obj.user for obj in task_owner_chain]
 
-    def assign_to(self, user):
-        """ add user to chain of assignment users
-        :param user: User model item
-        :return:
-        """
-        current_owner = TaskAssignedUser.objects.filter(task=self).order_by(
-            'time_assign').last()
-
-        if not current_owner:
-            TaskAssignedUser.objects.create(user=user, task=self)
-
-        if current_owner and current_owner.user != user:
-            TaskAssignedUser.objects.create(user=user, task=self,
-                                            parent=current_owner)
+    def get_assign_accept_owner_chain(self):
+        return self.get_owners_chain(assign_accept=True)
 
     @staticmethod
     def is_status_can_change(status):

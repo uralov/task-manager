@@ -19,8 +19,7 @@ class TaskForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
         task = kwargs.get('instance')
-        task_assign = TaskAssignedUser.objects.filter(task=task).exists()
-        if not task or not task_assign:
+        if not task or not task.owner:
             self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
                 queryset=User.objects.all(),
                 required=False
@@ -42,20 +41,20 @@ class TaskForm(forms.ModelForm):
         if status:
             self.instance.status = status
 
-        task = super(TaskForm, self).save()
-        self._save_attachment(task)
-
         assigned_to = list(self.cleaned_data.get('assigned_to', []))
         if assigned_to:
-            task.assign_to(assigned_to.pop(0))
+            self.instance.owner = assigned_to.pop(0)
+
+        task = super(TaskForm, self).save()
+        self._save_attachment(task)
 
         for owner in assigned_to:
             # create separate task for every assigned user except first
             task_duplicate = task
             task_duplicate.pk = None
+            task_duplicate.owner = owner
             task_duplicate.save()
             self._save_attachment(task_duplicate)
-            task_duplicate.assign_to(owner)
 
         return task
 

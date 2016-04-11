@@ -5,7 +5,7 @@
     <h1>Task detail view</h1>
     <a href="{% url 'task_management:list' %}">Task list</a>
     <ul>
-        {% if user == object.creator or user == object.owner and object.owner_accept_task %}
+        {% if user == object.creator or user in object.get_assign_accept_owner_chain %}
             <li><a href="{% url 'task_management:update' object.pk %}">Edit task</a></li>
             <li><a href="{% url 'task_management:sub_task_create' object.pk %}">
                 Sub task create
