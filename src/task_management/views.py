@@ -6,11 +6,11 @@ from django.views.generic import (
 )
 
 from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
-    DeclineTaskForm
+    DeclineTaskForm, ReassignTaskForm
 from task_management.models import Task, TaskComment, TaskAssignedUser
 from task_management.mixins import (
     TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin,
-    TaskAcceptPermitMixin, TaskApprovePermitMixin)
+    TaskAcceptPermitMixin, TaskApprovePermitMixin, TaskReassignPermitMixin)
 
 
 class TaskListView(LoginRequiredMixin, ListView):
@@ -75,14 +75,14 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     form_class = CommentForm
 
     def form_valid(self, form):
-        form.instance.task = Task.objects.get(pk=self.kwargs['task_pk'])
+        form.instance.task = Task.objects.get(pk=self.kwargs['pk'])
         form.instance.author = self.request.user
 
         return super(CommentCreateView, self).form_valid(form)
 
     def get_success_url(self):
         return reverse('task_management:detail',
-                       kwargs={'pk': self.kwargs['task_pk']})
+                       kwargs={'pk': self.kwargs['pk']})
 
 
 class AcceptTaskView(TaskAcceptPermitMixin, View):
@@ -107,7 +107,7 @@ class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('task_management:detail',
-                       kwargs={'pk': self.kwargs['task_pk']})
+                       kwargs={'pk': self.kwargs['pk']})
 
 
 class ApproveTaskView(TaskApprovePermitMixin, View):
@@ -132,6 +132,8 @@ class DeclineTaskView(TaskApprovePermitMixin, UpdateView):
     form_class = DeclineTaskForm
     template_name = 'task_management/task_decline_form.html'
 
-    def get_success_url(self):
-        return reverse('task_management:detail',
-                       kwargs={'pk': self.kwargs['pk']})
+
+class ReassignTaskView(TaskReassignPermitMixin, UpdateView):
+    model = Task
+    form_class = ReassignTaskForm
+    template_name = 'task_management/task_reassign_form.html'

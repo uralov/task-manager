@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseForbidden
 
-from task_management.models import TaskAssignedUser, Task
+from task_management.models import Task
 
 
 class TaskChangePermitMixin(LoginRequiredMixin):
@@ -53,7 +53,7 @@ class TaskAcceptPermitMixin(LoginRequiredMixin):
 
     def get_task(self):
         if not self.task:
-            self.task = Task.objects.get(pk=self.kwargs['task_pk'])
+            self.task = Task.objects.get(pk=self.kwargs['pk'])
 
         return self.task
 
@@ -77,6 +77,20 @@ class TaskApprovePermitMixin(LoginRequiredMixin):
         task = self.get_object()
         if request.user == task.creator and task.status == task.STATUS_COMPLETE:
             return super(TaskApprovePermitMixin, self).dispatch(
+                request, *args, **kwargs
+            )
+
+        return HttpResponseForbidden()
+
+
+class TaskReassignPermitMixin(LoginRequiredMixin):
+    """ Mixin which verifies that the current user can re-assign task. """
+
+    def dispatch(self, request, *args, **kwargs):
+        # only owner which accepted task can re-assign task
+        task = self.get_object()
+        if request.user == task.owner and task.owner_accept_task():
+            return super(TaskReassignPermitMixin, self).dispatch(
                 request, *args, **kwargs
             )
 

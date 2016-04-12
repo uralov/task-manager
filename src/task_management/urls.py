@@ -4,7 +4,7 @@ from task_management.views import (
     TaskListView, TaskCreateView, TaskUpdateView, TaskDetailView,
     TaskDeleteView, SubTaskCreateView, CommentCreateView,
     AcceptTaskView, RejectTaskView,
-    ApproveTaskView, DeclineTaskView)
+    ApproveTaskView, DeclineTaskView, ReassignTaskView)
 
 
 urlpatterns = [
@@ -17,16 +17,19 @@ urlpatterns = [
     url(r'^(?P<pk>[0-9]+)/sub_task_create/$',
         SubTaskCreateView.as_view(), name='sub_task_create'),
 
-    url(r'^(?P<task_pk>[0-9]+)/comment_create/$', CommentCreateView.as_view(),
+    url(r'^(?P<pk>[0-9]+)/comment_create/$', CommentCreateView.as_view(),
         name='comment_create'),
 
-    url(r'^(?P<task_pk>[0-9]+)/accept/$', AcceptTaskView.as_view(),
+    url(r'^(?P<pk>[0-9]+)/accept/$', AcceptTaskView.as_view(),
         name='accept'),
-    url(r'^(?P<task_pk>[0-9]+)/reject/$', RejectTaskView.as_view(),
+    url(r'^(?P<pk>[0-9]+)/reject/$', RejectTaskView.as_view(),
         name='reject'),
 
     url(r'^(?P<pk>[0-9]+)/approve/$', ApproveTaskView.as_view(),
         name='approve'),
     url(r'^(?P<pk>[0-9]+)/decline/$', DeclineTaskView.as_view(),
         name='decline'),
+
+    url(r'^(?P<pk>[0-9]+)/reassign/$', ReassignTaskView.as_view(),
+        name='reassign'),
 ]

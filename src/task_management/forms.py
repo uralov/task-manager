@@ -20,12 +20,14 @@ class TaskForm(forms.ModelForm):
         super(TaskForm, self).__init__(*args, **kwargs)
         task = kwargs.get('instance')
         if not task or not task.owner:
+            # multiple task assign
             self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
                 queryset=User.objects.all(),
                 required=False
             )
 
         if task and Task.is_status_can_change(task.status):
+            # change task status
             self.fields['status'] = forms.ChoiceField(
                 choices=[i for i in Task.STATUS_CHOICES
                          if Task.is_status_can_change(i[0])],
@@ -36,7 +38,24 @@ class TaskForm(forms.ModelForm):
         for each in self.cleaned_data['attachments']:
             TaskAttachment.objects.create(attachment=each, task=task)
 
+    def _save_multi_assign(self, assigned_to, task):
+        """ Create separate task for every assigned user except first.
+        :param assigned_to:
+        :param task:
+        :return:
+        """
+        for owner in assigned_to:
+            task_duplicate = task
+            task_duplicate.pk = None
+            task_duplicate.owner = owner
+            task_duplicate.save()
+            self._save_attachment(task_duplicate)
+
     def save(self, commit=True):
+        """ Save task form to object
+        :param commit:
+        :return:
+        """
         status = self.cleaned_data.get('status')
         if status:
             self.instance.status = status
@@ -48,13 +67,7 @@ class TaskForm(forms.ModelForm):
         task = super(TaskForm, self).save()
         self._save_attachment(task)
 
-        for owner in assigned_to:
-            # create separate task for every assigned user except first
-            task_duplicate = task
-            task_duplicate.pk = None
-            task_duplicate.owner = owner
-            task_duplicate.save()
-            self._save_attachment(task_duplicate)
+        self._save_multi_assign(assigned_to, task)
 
         return task
 
@@ -88,3 +101,20 @@ class DeclineTaskForm(forms.ModelForm):
         self.instance.status = Task.STATUS_DECLINED
 
         return super(DeclineTaskForm, self).save(commit)
+
+
+class ReassignTaskForm(forms.ModelForm):
+    """ From for re-assign task """
+    class Meta:
+        model = Task
+        fields = ['owner', ]
+
+    def __init__(self, *args, **kwargs):
+        super(ReassignTaskForm, self).__init__(*args, **kwargs)
+        task = kwargs.get('instance')
+        owners_chain_id = [user.id for user in task.get_owners_chain()]
+        owners_chain_id.append(task.creator_id)
+        self.fields['owner'] = forms.ModelChoiceField(
+            queryset=User.objects.all().exclude(id__in=owners_chain_id),
+            required=True, label='Re-assign to'
+        )

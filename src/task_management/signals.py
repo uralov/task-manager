@@ -5,7 +5,7 @@ from task_management.models import Task, TaskAssignedUser
 
 
 @receiver(post_save, sender=Task)
-def create_task_assign_chain(sender, instance, **kwargs):
+def add_user_to_assign_chain(sender, instance, **kwargs):
     """ Add user to task owner chain if owner changes """
     if instance.owner:
         owner_chain_last_el = TaskAssignedUser.objects.filter(task=instance)\
