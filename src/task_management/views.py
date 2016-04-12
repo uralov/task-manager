@@ -60,8 +60,8 @@ class TaskDetailView(TaskViewPermitMixin, DetailView):
         kwargs['comments'] = TaskComment.objects.filter(task=self.object)\
             .prefetch_related('author')
         kwargs['task_assigned_to'] = TaskAssignedUser.objects.filter(
-            task=self.object)
-        kwargs['task_assigned_to'] = self.object.get_owners_chain()
+            task=self.object
+        )
         return super(TaskDetailView, self).get_context_data(**kwargs)
 
 

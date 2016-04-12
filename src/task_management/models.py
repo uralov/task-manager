@@ -62,7 +62,7 @@ class Task(MPTTModel):
     def get_absolute_url(self):
         return reverse('task_management:detail', kwargs={'pk': self.pk})
 
-    def is_owner_accept_task(self):
+    def owner_accept_task(self):
         return TaskAssignedUser.objects.filter(task=self).order_by(
             'time_assign').last().assign_accept
 

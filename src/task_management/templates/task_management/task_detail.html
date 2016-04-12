@@ -14,7 +14,6 @@
         {% if user == object.creator %}
             <li><a href="{% url 'task_management:delete' object.pk %}">Delete task</a></li>
         {% endif %}
-
         {% if user == object.owner and object.owner_accept_task == None %}
             <li><a href="{% url 'task_management:accept' object.pk %}">
                 Accept task

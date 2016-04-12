@@ -60,7 +60,7 @@ class TaskAcceptPermitMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         # only task owner can accept/reject task
         task = self.get_task()
-        if request.user == task.owner and task.is_owner_accept_task() is None:
+        if request.user == task.owner and task.owner_accept_task() is None:
             return super(TaskAcceptPermitMixin, self).dispatch(
                 request, *args, **kwargs
             )
