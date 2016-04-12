@@ -8,7 +8,7 @@ from mptt.models import MPTTModel, TreeForeignKey, TreeManyToManyField
 
 class Task(MPTTModel):
     """ Task model """
-    STATUS_DECLINED = 0
+    STATUS_DECLINE = 0
     STATUS_DRAFT = 1
     STATUS_PENDING = 2
     STATUS_WORKING = 3
@@ -17,7 +17,7 @@ class Task(MPTTModel):
     STATUS_COMPLETE = 6
     STATUS_APPROVE = 7
     STATUS_CHOICES = (
-        (STATUS_DECLINED, 'Declined'),
+        (STATUS_DECLINE, 'Declined'),
         (STATUS_DRAFT, 'Draft'),
         (STATUS_PENDING, 'Pending Acceptance'),
         (STATUS_WORKING, 'Working On It'),
@@ -71,14 +71,14 @@ class Task(MPTTModel):
         :param assign_accept:
         :return: list of assignment users
         """
-        task_owner_chain = TaskAssignedUser.objects.filter(task=self).order_by(
+        owner_chain = TaskAssignedUser.objects.filter(task=self).order_by(
             'time_assign').prefetch_related('user')
         if assign_accept:
-            task_owner_chain.filter(assign_accept=assign_accept)
+            owner_chain = owner_chain.filter(assign_accept=assign_accept)
 
-        return [obj.user for obj in task_owner_chain]
+        return [obj.user for obj in owner_chain]
 
-    def get_assign_accept_owner_chain(self):
+    def get_accepted_owners_chain(self):
         return self.get_owners_chain(assign_accept=True)
 
     @staticmethod
@@ -94,8 +94,10 @@ class TaskAssignedUser(MPTTModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE,
                              related_name='owners_chain')
-    parent = TreeForeignKey('self', null=True, blank=True,
-                            related_name='children', db_index=True)
+    parent = TreeForeignKey(
+        'self', null=True, blank=True, on_delete=models.CASCADE,
+        related_name='children', db_index=True
+    )
     time_assign = models.DateTimeField(auto_now_add=True)
     assign_accept = models.NullBooleanField(verbose_name='Accept assign')
     assign_description = models.TextField(verbose_name='Description',

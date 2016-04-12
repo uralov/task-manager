@@ -16,7 +16,7 @@ class TaskForm(forms.ModelForm):
 
     attachments = MultiFileField(max_num=10, required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user=None, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
         task = kwargs.get('instance')
         if not task or not task.owner:
@@ -32,6 +32,13 @@ class TaskForm(forms.ModelForm):
                 choices=[i for i in Task.STATUS_CHOICES
                          if Task.is_status_can_change(i[0])],
                 initial=task.status
+            )
+
+        if task and task.status == Task.STATUS_DECLINE and user == task.creator:
+            # if task was reject, creator can choose new task owner
+            self.fields['assigned_to'] = forms.ModelChoiceField(
+                queryset=User.objects.all(), required=False,
+                label='Assign again'
             )
 
     def _save_attachment(self, task):
@@ -60,7 +67,11 @@ class TaskForm(forms.ModelForm):
         if status:
             self.instance.status = status
 
-        assigned_to = list(self.cleaned_data.get('assigned_to', []))
+        assigned_to = self.cleaned_data.get('assigned_to', [])
+        try:
+            assigned_to = list(assigned_to)
+        except TypeError:
+            assigned_to = [assigned_to]
         if assigned_to:
             self.instance.owner = assigned_to.pop(0)
 
@@ -98,7 +109,7 @@ class DeclineTaskForm(forms.ModelForm):
         fields = ['status_description', ]
 
     def save(self, commit=True):
-        self.instance.status = Task.STATUS_DECLINED
+        self.instance.status = Task.STATUS_DECLINE
 
         return super(DeclineTaskForm, self).save(commit)
 

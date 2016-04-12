@@ -51,6 +51,21 @@ class TaskUpdateView(TaskChangePermitMixin, UpdateView):
     model = Task
     form_class = TaskForm
 
+    def form_valid(self, form):
+        task = self.object
+        user = self.request.user
+        if task.status == Task.STATUS_DECLINE and user == task.creator:
+            if form.cleaned_data['assigned_to']:
+                TaskAssignedUser.objects.filter(task=task).delete()
+
+        return super(TaskUpdateView, self).form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super(TaskUpdateView, self).get_form_kwargs()
+        kwargs.update({'user': self.request.user})
+
+        return kwargs
+
 
 class TaskDetailView(TaskViewPermitMixin, DetailView):
     model = Task

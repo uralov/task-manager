@@ -31,6 +31,6 @@ def change_assign_status(sender, instance, **kwargs):
         task.status = Task.STATUS_WORKING
 
     if instance.assign_accept is False:
-        task.status = Task.STATUS_DECLINED
+        task.status = Task.STATUS_DECLINE
 
     task.save()
