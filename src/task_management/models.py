@@ -46,8 +46,7 @@ class Task(MPTTModel):
         blank=True, null=True
     )
     owners = TreeManyToManyField(
-        User, verbose_name='Owners', through='TaskAssignedUser',
-        blank=True, null=True
+        User, verbose_name='Owners', through='TaskAssignedUser', blank=True,
     )
     status = models.SmallIntegerField('Status', choices=STATUS_CHOICES,
                                       default=STATUS_DRAFT)

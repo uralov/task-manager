@@ -23,9 +23,9 @@
     </ul>
 
     <h2>Assigned to me:</h2>
-    <ul class="root">
-        {% for task in tasks_assigned %}
-            <li><a href="{{ task.get_absolute_url }}">{{ task.title }}</a></li>
-        {% endfor %}
-    </ul>
+    {% for task, structure in tasks_assigned|tree_info %}
+        {% if structure.new_level %}<ul><li>{% else %}</li><li>{% endif %}
+            <a href="{{ task.get_absolute_url }}">{{ task.title }}</a>
+        {% for level in structure.closed_levels %}</li></ul>{% endfor %}
+    {% endfor %}
 {% endblock %}
