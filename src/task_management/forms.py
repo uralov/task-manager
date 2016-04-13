@@ -3,7 +3,9 @@ from django.contrib.auth.models import User
 
 from multiupload.fields import MultiFileField
 
-from task_management.models import Task, TaskAttachment, TaskComment
+from task_management.models import (
+    Task, TaskAttachment, TaskComment, TaskAssignedUser
+)
 
 
 class TaskForm(forms.ModelForm):
@@ -14,35 +16,70 @@ class TaskForm(forms.ModelForm):
 
     attachments = MultiFileField(max_num=10, required=False)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        instance = kwargs.get('instance')
-        if not instance or not instance.owner:
+    def __init__(self, user=None, *args, **kwargs):
+        super(TaskForm, self).__init__(*args, **kwargs)
+        task = kwargs.get('instance')
+        if not task or not task.owner:
+            # multiple task assign
             self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
                 queryset=User.objects.all(),
                 required=False
+            )
+
+        if task and Task.is_status_can_change(task.status) \
+                and task.is_leaf_node():
+            # change task status
+            self.fields['status'] = forms.ChoiceField(
+                choices=[i for i in Task.STATUS_CHOICES
+                         if Task.is_status_can_change(i[0])],
+                initial=task.status
+            )
+
+        if task and task.status == Task.STATUS_DECLINE and user == task.creator:
+            # if task was reject, creator can choose new task owner
+            self.fields['assigned_to'] = forms.ModelChoiceField(
+                queryset=User.objects.all(), required=False,
+                label='Assign again'
             )
 
     def _save_attachment(self, task):
         for each in self.cleaned_data['attachments']:
             TaskAttachment.objects.create(attachment=each, task=task)
 
-    def save(self, commit=True):
-        assigned_to = list(self.cleaned_data.get('assigned_to', []))
-        if assigned_to:
-            self.instance.status = Task.STATUS_PENDING
-            self.instance.owner = assigned_to.pop(0)
-
-        task = super().save()
-        self._save_attachment(task)
-
+    def _save_multi_assign(self, assigned_to, task):
+        """ Create separate task for every assigned user except first.
+        :param assigned_to:
+        :param task:
+        :return:
+        """
         for owner in assigned_to:
-            # create separate task for every assigned user except first
             task_duplicate = task
             task_duplicate.pk = None
             task_duplicate.owner = owner
             task_duplicate.save()
             self._save_attachment(task_duplicate)
+
+    def save(self, commit=True):
+        """ Save task form to object
+        :param commit:
+        :return:
+        """
+        status = self.cleaned_data.get('status')
+        if status:
+            self.instance.status = status
+
+        assigned_to = self.cleaned_data.get('assigned_to', [])
+        try:
+            assigned_to = list(assigned_to)
+        except TypeError:
+            assigned_to = [assigned_to]
+        if assigned_to:
+            self.instance.owner = assigned_to.pop(0)
+
+        task = super(TaskForm, self).save()
+        self._save_attachment(task)
+
+        self._save_multi_assign(assigned_to, task)
 
         return task
 
@@ -52,3 +89,44 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = TaskComment
         fields = ['message', ]
+
+
+class RejectTaskForm(forms.ModelForm):
+    """ Form for reject task """
+    class Meta:
+        model = TaskAssignedUser
+        fields = ['assign_description', ]
+
+    def save(self, commit=True):
+        self.instance.assign_accept = False
+
+        return super(RejectTaskForm, self).save(commit)
+
+
+class DeclineTaskForm(forms.ModelForm):
+    """ From for decline task """
+    class Meta:
+        model = Task
+        fields = ['status_description', ]
+
+    def save(self, commit=True):
+        self.instance.status = Task.STATUS_DECLINE
+
+        return super(DeclineTaskForm, self).save(commit)
+
+
+class ReassignTaskForm(forms.ModelForm):
+    """ From for re-assign task """
+    class Meta:
+        model = Task
+        fields = ['owner', ]
+
+    def __init__(self, *args, **kwargs):
+        super(ReassignTaskForm, self).__init__(*args, **kwargs)
+        task = kwargs.get('instance')
+        owners_chain_id = [user.id for user in task.get_owners_chain()]
+        owners_chain_id.append(task.creator_id)
+        self.fields['owner'] = forms.ModelChoiceField(
+            queryset=User.objects.all().exclude(id__in=owners_chain_id),
+            required=True, label='Re-assign to'
+        )

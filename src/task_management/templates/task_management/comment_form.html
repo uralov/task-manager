@@ -1,8 +1,4 @@
-<style>
-    label {display: block}
-</style>
-
-<form action="{% url 'task_management:comment_create' task_pk=task.id %}" method="post">
+<form action="{% url 'task_management:comment_create' task.id %}" method="post">
     {% csrf_token %}
     {{ comment_form.as_p }}
 

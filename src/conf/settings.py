@@ -14,7 +14,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '+i0edg=v1d(0)%x)nf4lg!*ocpt*o8go1#z$(9@h)hjs47cs#r'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 ALLOWED_HOSTS = [
@@ -115,6 +115,9 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(
     os.path.dirname(BASE_DIR), 'public', 'static'
 )
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'task_management', 'static'),
+)
 
 # Media files (user content)
 MEDIA_URL = '/media/'
@@ -128,6 +131,9 @@ MEDIA_ROOT = os.path.join(
 INSTALLED_APPS.append('mptt')
 # enable task management system
 INSTALLED_APPS.append('task_management')
+
+# temporary configured for admin authorization
+LOGIN_URL = '/admin/login/'
 
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - END
 

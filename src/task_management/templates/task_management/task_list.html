@@ -1,5 +1,5 @@
 {% extends 'task_management/base.html' %}
-{% load mptt_tags tree_for_nodes %}
+{% load mptt_tags %}
 
 {% block content %}
     <h1>Task list</h1>
@@ -23,19 +23,9 @@
     </ul>
 
     <h2>Assigned to me:</h2>
-{#    <ul class="root">#}
-{#        {% recursetree tasks_assigned %}#}
-{#            <li>#}
-{#                <a href="{{ node.get_absolute_url }}">{{ node.title }}</a>#}
-{#                {% if not node.is_leaf_node %}#}
-{#                    <ul class="children">#}
-{#                        {{ children }}#}
-{#                    </ul>#}
-{#                {% endif %}#}
-{#            </li>#}
-{#        {% endrecursetree %}#}
-{#    </ul>#}
-
-    {{ tasks_assigned|tree_for_nodes }}
-
+    <ul class="root">
+        {% for task in tasks_assigned %}
+            <li><a href="{{ task.get_absolute_url }}">{{ task.title }}</a></li>
+        {% endfor %}
+    </ul>
 {% endblock %}

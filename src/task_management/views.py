@@ -1,12 +1,16 @@
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseForbidden
+from django.shortcuts import redirect
 from django.views.generic import (
-    ListView, CreateView, UpdateView, DetailView, DeleteView
+    ListView, CreateView, UpdateView, DetailView, DeleteView, View
 )
 
-from task_management.forms import TaskForm, CommentForm
-from task_management.models import Task, TaskComment
+from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
+    DeclineTaskForm, ReassignTaskForm
+from task_management.models import Task, TaskComment, TaskAssignedUser
+from task_management.mixins import (
+    TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin,
+    TaskAcceptPermitMixin, TaskApprovePermitMixin, TaskReassignPermitMixin)
 
 
 class TaskListView(LoginRequiredMixin, ListView):
@@ -15,11 +19,11 @@ class TaskListView(LoginRequiredMixin, ListView):
     context_object_name = 'tasks_assigned'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset.filter(owner=self.request.user)
+        queryset = super(TaskListView, self).get_queryset()
+        return queryset.filter(owners=self.request.user)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super(TaskListView, self).get_context_data(**kwargs)
         context['task_created'] = Task.objects.filter(
             creator=self.request.user
         )
@@ -32,41 +36,53 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        return super().form_valid(form)
+        return super(TaskCreateView, self).form_valid(form)
 
 
-class SubTaskCreateView(TaskCreateView):
+class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
     def form_valid(self, form):
-        parent_task = Task.objects.get(pk=self.kwargs['parent_pk'])
+        parent_task = Task.objects.get(pk=self.kwargs['pk'])
         form.instance.parent = parent_task
 
-        return super().form_valid(form)
+        return super(SubTaskCreateView, self).form_valid(form)
 
 
-class TaskUpdateView(LoginRequiredMixin, UpdateView):
+class TaskUpdateView(TaskChangePermitMixin, UpdateView):
     model = Task
     form_class = TaskForm
 
+    def form_valid(self, form):
+        task = self.object
+        user = self.request.user
+        if task.status == Task.STATUS_DECLINE and user == task.creator:
+            if form.cleaned_data['assigned_to']:
+                TaskAssignedUser.objects.filter(task=task).delete()
 
-class TaskDetailView(LoginRequiredMixin, DetailView):
+        return super(TaskUpdateView, self).form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super(TaskUpdateView, self).get_form_kwargs()
+        kwargs.update({'user': self.request.user})
+
+        return kwargs
+
+
+class TaskDetailView(TaskViewPermitMixin, DetailView):
     model = Task
 
     def get_context_data(self, **kwargs):
         kwargs['comment_form'] = CommentForm()
         kwargs['comments'] = TaskComment.objects.filter(task=self.object)\
             .prefetch_related('author')
-        return super().get_context_data(**kwargs)
+        kwargs['task_assigned_to'] = TaskAssignedUser.objects.filter(
+            task=self.object
+        )
+        return super(TaskDetailView, self).get_context_data(**kwargs)
 
 
-class TaskDeleteView(LoginRequiredMixin, DeleteView):
+class TaskDeleteView(TaskDeletePermitMixin, DeleteView):
     model = Task
     success_url = reverse_lazy('task_management:list')
-
-    def post(self, request, *args, **kwargs):
-        if self.request.user == self.object.creator:
-            return super().post(request, *args, **kwargs)
-
-        return HttpResponseForbidden()
 
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
@@ -74,11 +90,65 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     form_class = CommentForm
 
     def form_valid(self, form):
-        form.instance.task = Task.objects.get(pk=self.kwargs['task_pk'])
+        form.instance.task = Task.objects.get(pk=self.kwargs['pk'])
         form.instance.author = self.request.user
 
-        return super().form_valid(form)
+        return super(CommentCreateView, self).form_valid(form)
 
     def get_success_url(self):
         return reverse('task_management:detail',
-                       kwargs={'pk': self.kwargs['task_pk']})
+                       kwargs={'pk': self.kwargs['pk']})
+
+
+class AcceptTaskView(TaskAcceptPermitMixin, View):
+    def get(self, *args, **kwargs):
+        task = self.get_task()
+        assign = TaskAssignedUser.objects.get(task=task,
+                                              user=self.request.user)
+        assign.assign_accept = True
+        assign.save()
+
+        return redirect(task)
+
+
+class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
+    model = TaskAssignedUser
+    form_class = RejectTaskForm
+    template_name = 'task_management/task_reject_form.html'
+
+    def get_object(self, queryset=None):
+        return self.model.objects.get(task=self.get_task(),
+                                      user=self.request.user)
+
+    def get_success_url(self):
+        return reverse('task_management:detail',
+                       kwargs={'pk': self.kwargs['pk']})
+
+
+class ApproveTaskView(TaskApprovePermitMixin, View):
+    object = None
+
+    def get_object(self):
+        if not self.object:
+            self.object = Task.objects.get(pk=self.kwargs['pk'])
+
+        return self.object
+
+    def get(self, *args, **kwargs):
+        task = self.get_object()
+        task.status = Task.STATUS_APPROVE
+        task.save()
+
+        return redirect(task)
+
+
+class DeclineTaskView(TaskApprovePermitMixin, UpdateView):
+    model = Task
+    form_class = DeclineTaskForm
+    template_name = 'task_management/task_decline_form.html'
+
+
+class ReassignTaskView(TaskReassignPermitMixin, UpdateView):
+    model = Task
+    form_class = ReassignTaskForm
+    template_name = 'task_management/task_reassign_form.html'

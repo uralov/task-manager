@@ -3,12 +3,12 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from mptt.models import MPTTModel, TreeForeignKey
+from mptt.models import MPTTModel, TreeForeignKey, TreeManyToManyField
 
 
 class Task(MPTTModel):
     """ Task model """
-    STATUS_DECLINED = 0
+    STATUS_DECLINE = 0
     STATUS_DRAFT = 1
     STATUS_PENDING = 2
     STATUS_WORKING = 3
@@ -17,7 +17,7 @@ class Task(MPTTModel):
     STATUS_COMPLETE = 6
     STATUS_APPROVE = 7
     STATUS_CHOICES = (
-        (STATUS_DECLINED, 'Declined'),
+        (STATUS_DECLINE, 'Declined'),
         (STATUS_DRAFT, 'Draft'),
         (STATUS_PENDING, 'Pending Acceptance'),
         (STATUS_WORKING, 'Working On It'),
@@ -31,9 +31,9 @@ class Task(MPTTModel):
     CRITICALITY_MEDIUM = 1
     CRITICALITY_HIGH = 2
     CRITICALITY_CHOICES = (
-        (CRITICALITY_LOW, 'Low'),
-        (CRITICALITY_MEDIUM, 'Medium'),
         (CRITICALITY_HIGH, 'High'),
+        (CRITICALITY_MEDIUM, 'Medium'),
+        (CRITICALITY_LOW, 'Low'),
     )
     parent = TreeForeignKey('self', null=True, blank=True,
                             related_name='children', db_index=True)
@@ -41,8 +41,14 @@ class Task(MPTTModel):
     description = models.TextField('Description')
     creator = models.ForeignKey(User, verbose_name='Creator',
                                 related_name='created_tasks')
-    owner = models.ForeignKey(User, verbose_name='Owner',
-                              related_name='owned_tasks', blank=True, null=True)
+    owner = models.ForeignKey(
+        User, verbose_name='Owner', related_name='owned_tasks',
+        blank=True, null=True
+    )
+    owners = TreeManyToManyField(
+        User, verbose_name='Owners', through='TaskAssignedUser',
+        blank=True, null=True
+    )
     status = models.SmallIntegerField('Status', choices=STATUS_CHOICES,
                                       default=STATUS_DRAFT)
     status_description = models.TextField('Status description')
@@ -56,19 +62,42 @@ class Task(MPTTModel):
     def get_absolute_url(self):
         return reverse('task_management:detail', kwargs={'pk': self.pk})
 
+    def owner_accept_task(self):
+        return TaskAssignedUser.objects.filter(task=self).order_by(
+            'time_assign').last().assign_accept
+
+    def get_owners_chain(self, assign_accept=None):
+        """ get chain of assignment users
+        :param assign_accept:
+        :return: list of assignment users
+        """
+        owner_chain = TaskAssignedUser.objects.filter(task=self).order_by(
+            'time_assign').prefetch_related('user')
+        if assign_accept:
+            owner_chain = owner_chain.filter(assign_accept=assign_accept)
+
+        return [obj.user for obj in owner_chain]
+
+    def get_accepted_owners_chain(self):
+        return self.get_owners_chain(assign_accept=True)
+
+    @staticmethod
+    def is_status_can_change(status):
+        return Task.STATUS_PENDING < status < Task.STATUS_APPROVE
+
     def __str__(self):
         return self.title
 
 
-class TaskOwnerChain(MPTTModel):
-    """ Task owner model.
-    Stores chain of assignments of tasks to users
-    """
+class TaskAssignedUser(MPTTModel):
+    """ Stores chain of assignments of tasks to users """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE,
                              related_name='owners_chain')
-    parent = TreeForeignKey('self', null=True, blank=True,
-                            related_name='children', db_index=True)
+    parent = TreeForeignKey(
+        'self', null=True, blank=True, on_delete=models.CASCADE,
+        related_name='children', db_index=True
+    )
     time_assign = models.DateTimeField(auto_now_add=True)
     assign_accept = models.NullBooleanField(verbose_name='Accept assign')
     assign_description = models.TextField(verbose_name='Description',
