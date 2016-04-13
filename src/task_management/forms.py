@@ -26,7 +26,8 @@ class TaskForm(forms.ModelForm):
                 required=False
             )
 
-        if task and Task.is_status_can_change(task.status):
+        if task and Task.is_status_can_change(task.status) \
+                and task.is_leaf_node():
             # change task status
             self.fields['status'] = forms.ChoiceField(
                 choices=[i for i in Task.STATUS_CHOICES

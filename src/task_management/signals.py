@@ -1,5 +1,6 @@
+from functools import reduce
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 
 from task_management.models import Task, TaskAssignedUser
 
@@ -34,3 +35,30 @@ def change_assign_status(sender, instance, **kwargs):
         task.status = Task.STATUS_DECLINE
 
     task.save()
+
+
+@receiver(pre_save, sender=Task)
+def recalculate_parent_task_status(sender, instance, **kwargs):
+    """ Signal recalculate status for parent task.
+
+    It will cause recursion for all parents.
+    """
+    if instance.parent:
+        if instance.id:
+            task = Task.objects.get(id=instance.id)
+            if task.status != instance.status:
+                # task status changes
+                recalculate_status(instance.parent, instance)
+        else:
+            recalculate_status(instance.parent, instance)
+
+
+def recalculate_status(parent_task, current_task):
+    """ Calculate parent task status by average child task status. """
+    children = parent_task.get_children()
+    children_status = [i.status for i in children if i.id != current_task.id]
+    children_status.append(current_task.status)
+    status_sum = reduce(lambda x, y: x + y, children_status)
+    status_avg = int(status_sum/len(children_status))
+    parent_task.status = status_avg
+    parent_task.save()
