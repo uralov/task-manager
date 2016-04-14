@@ -127,10 +127,12 @@ MEDIA_ROOT = os.path.join(
 
 
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - START
-# enable django-mptt (hierarchical models)
-INSTALLED_APPS.append('mptt')
-# enable task management system
-INSTALLED_APPS.append('task_management')
+
+INSTALLED_APPS.extend([
+    'mptt',  # enable django-mptt (hierarchical models)
+    'notifications',  # enable django notifications
+    'task_management',  # enable task management system
+])
 
 # temporary configured for admin authorization
 LOGIN_URL = '/admin/login/'

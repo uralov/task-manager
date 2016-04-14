@@ -4,6 +4,7 @@ from django.shortcuts import redirect
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView, View
 )
+from notifications.signals import notify
 
 from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
     DeclineTaskForm, ReassignTaskForm
@@ -35,6 +36,9 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
     form_class = TaskForm
 
     def form_valid(self, form):
+        user = self.request.user
+        notify.send(user, recipient=user, verb='create task', )
+
         form.instance.creator = self.request.user
         return super(TaskCreateView, self).form_valid(form)
 
