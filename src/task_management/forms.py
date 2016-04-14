@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 from multiupload.fields import MultiFileField
 
 from task_management.models import (
-    Task, TaskAttachment, TaskComment, TaskAssignedUser
-)
+    Task, TaskAttachment, TaskComment, TaskAssignedUser,
+    TaskActionLog)
 
 
 class TaskForm(forms.ModelForm):
@@ -18,6 +18,8 @@ class TaskForm(forms.ModelForm):
 
     def __init__(self, user=None, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
+        self.user = user
+
         task = kwargs.get('instance')
         if not task or not task.owner:
             # multiple task assign
@@ -46,6 +48,10 @@ class TaskForm(forms.ModelForm):
         for each in self.cleaned_data['attachments']:
             TaskAttachment.objects.create(attachment=each, task=task)
 
+        if self.cleaned_data['attachments']:
+            TaskActionLog.log(self.user, 'add attachments to task',
+                              task)
+
     def _save_multi_assign(self, assigned_to, task):
         """ Create separate task for every assigned user except first.
         :param assigned_to:
@@ -58,6 +64,8 @@ class TaskForm(forms.ModelForm):
             task_duplicate.owner = owner
             task_duplicate.save()
             self._save_attachment(task_duplicate)
+
+            TaskActionLog.log(self.user, 'create task', task_duplicate)
 
     def save(self, commit=True):
         """ Save task form to object
@@ -77,6 +85,7 @@ class TaskForm(forms.ModelForm):
             self.instance.owner = assigned_to.pop(0)
 
         task = super(TaskForm, self).save()
+
         self._save_attachment(task)
 
         self._save_multi_assign(assigned_to, task)

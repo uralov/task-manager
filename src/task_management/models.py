@@ -124,30 +124,28 @@ class TaskComment(models.Model):
     time_create = models.DateTimeField('Time of create', auto_now_add=True)
     time_update = models.DateTimeField('Time of update', auto_now=True)
 
+    def get_absolute_url(self):
+        return reverse('task_management:detail', kwargs={'pk': self.task.pk})
+
 
 class TaskActionLog(models.Model):
-    """ User action log on tasks """
-    ACTION_TASK_CREATE = 0
-    ACTION_TASK_CHANGE = 1
-    ACTION_ATTACHMENT_UPLOAD = 2
-    ACTION_SUB_TASK_CREATE = 3
-    ACTION_TASK_STATUS_CHANGE = 4
-    ACTION_TASK_COMMENT = 5
-    ACTION_CHOICES = (
-        (ACTION_TASK_CREATE, 'Task create'),
-        (ACTION_TASK_CHANGE, 'Task change'),
-        (ACTION_ATTACHMENT_UPLOAD, 'Attachment upload'),
-        (ACTION_SUB_TASK_CREATE, 'Sub task create'),
-        (ACTION_TASK_STATUS_CHANGE, 'Task status change'),
-        (ACTION_TASK_COMMENT, 'Task comment'),
-    )
-
-    task = models.ForeignKey(Task, related_name='actions',
-                             verbose_name='Action task')
+    """ User action log """
     actor = models.ForeignKey(User, verbose_name='Actor')
-    action_type = models.SmallIntegerField('Action type',
-                                           choices=ACTION_CHOICES)
-    time_action = models.DateTimeField('Time of action', auto_now_add=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')
+    action = models.CharField('Action', max_length=512)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE,
+                                     blank=True, null=True)
+    object_id = models.PositiveIntegerField(blank=True, null=True)
+    action_goal = GenericForeignKey('content_type', 'object_id')
+    time_create = models.DateTimeField('Time of action', auto_now_add=True)
+
+    @staticmethod
+    def log(actor, action, action_goal=None):
+        """
+        Logging user action
+        :param actor: User object
+        :param action: action description via verbs
+        :param action_goal: object of the action
+        :return:
+        """
+        return TaskActionLog.objects.create(actor=actor, action=action,
+                                            action_goal=action_goal)
