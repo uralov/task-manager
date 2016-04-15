@@ -2,6 +2,7 @@
 <ul>
     {% for comment in comments %}
         <li>
+            <a name="{{ comment.id }}"></a>
             {{ comment.author }}: {{ comment.message }}
             <div>published: {{ comment.time_create }}</div>
         </li>

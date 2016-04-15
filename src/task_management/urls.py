@@ -4,7 +4,7 @@ from task_management.views import (
     TaskListView, TaskCreateView, TaskUpdateView, TaskDetailView,
     TaskDeleteView, SubTaskCreateView, CommentCreateView,
     AcceptTaskView, RejectTaskView,
-    ApproveTaskView, DeclineTaskView, ReassignTaskView)
+    ApproveTaskView, DeclineTaskView, ReassignTaskView, ActionLogListView)
 
 
 urlpatterns = [
@@ -20,10 +20,8 @@ urlpatterns = [
     url(r'^(?P<pk>[0-9]+)/comment_create/$', CommentCreateView.as_view(),
         name='comment_create'),
 
-    url(r'^(?P<pk>[0-9]+)/accept/$', AcceptTaskView.as_view(),
-        name='accept'),
-    url(r'^(?P<pk>[0-9]+)/reject/$', RejectTaskView.as_view(),
-        name='reject'),
+    url(r'^(?P<pk>[0-9]+)/accept/$', AcceptTaskView.as_view(), name='accept'),
+    url(r'^(?P<pk>[0-9]+)/reject/$', RejectTaskView.as_view(), name='reject'),
 
     url(r'^(?P<pk>[0-9]+)/approve/$', ApproveTaskView.as_view(),
         name='approve'),
@@ -32,4 +30,6 @@ urlpatterns = [
 
     url(r'^(?P<pk>[0-9]+)/reassign/$', ReassignTaskView.as_view(),
         name='reassign'),
+
+    url(r'^action_log/$', ActionLogListView.as_view(), name='action_log'),
 ]

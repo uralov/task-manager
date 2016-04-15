@@ -8,7 +8,8 @@ from notifications.signals import notify
 
 from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
     DeclineTaskForm, ReassignTaskForm
-from task_management.models import Task, TaskComment, TaskAssignedUser
+from task_management.models import Task, TaskComment, TaskAssignedUser, \
+    TaskActionLog
 from task_management.mixins import (
     TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin,
     TaskAcceptPermitMixin, TaskApprovePermitMixin, TaskReassignPermitMixin)
@@ -32,6 +33,7 @@ class TaskListView(LoginRequiredMixin, ListView):
 
 
 class TaskCreateView(LoginRequiredMixin, CreateView):
+    """ View for create task """
     model = Task
     form_class = TaskForm
 
@@ -42,13 +44,32 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         form.instance.creator = self.request.user
         return super(TaskCreateView, self).form_valid(form)
 
+    def post(self, request, *args, **kwargs):
+        result = super(TaskCreateView, self).post(request, *args, **kwargs)
+        TaskActionLog.log(self.request.user, 'create task', self.object)
+
+        return result
+
+    def get_form_kwargs(self):
+        kwargs = super(TaskCreateView, self).get_form_kwargs()
+        kwargs.update({'user': self.request.user})
+
+        return kwargs
+
 
 class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
+    """ View for create sub task """
     def form_valid(self, form):
         parent_task = Task.objects.get(pk=self.kwargs['pk'])
         form.instance.parent = parent_task
 
         return super(SubTaskCreateView, self).form_valid(form)
+
+    def post(self, request, *args, **kwargs):
+        result = super(SubTaskCreateView, self).post(request, *args, **kwargs)
+        TaskActionLog.log(self.request.user, 'create task', self.object)
+
+        return result
 
 
 class TaskUpdateView(TaskChangePermitMixin, UpdateView):
@@ -63,6 +84,12 @@ class TaskUpdateView(TaskChangePermitMixin, UpdateView):
                 TaskAssignedUser.objects.filter(task=task).delete()
 
         return super(TaskUpdateView, self).form_valid(form)
+
+    def post(self, request, *args, **kwargs):
+        result = super(TaskUpdateView, self).post(request, *args, **kwargs)
+        TaskActionLog.log(self.request.user, 'update task', self.object)
+
+        return result
 
     def get_form_kwargs(self):
         kwargs = super(TaskUpdateView, self).get_form_kwargs()
@@ -81,12 +108,19 @@ class TaskDetailView(TaskViewPermitMixin, DetailView):
         kwargs['task_assigned_to'] = TaskAssignedUser.objects.filter(
             task=self.object
         )
+
         return super(TaskDetailView, self).get_context_data(**kwargs)
 
 
 class TaskDeleteView(TaskDeletePermitMixin, DeleteView):
     model = Task
     success_url = reverse_lazy('task_management:list')
+
+    def post(self, request, *args, **kwargs):
+        TaskActionLog.log(self.request.user,
+                          'delete task {0}'.format(self.get_object().title))
+
+        return super(TaskDeleteView, self).post(request, *args, **kwargs)
 
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
@@ -98,6 +132,12 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         form.instance.author = self.request.user
 
         return super(CommentCreateView, self).form_valid(form)
+
+    def post(self, request, *args, **kwargs):
+        result = super(CommentCreateView, self).post(request, *args, **kwargs)
+        TaskActionLog.log(self.request.user, 'add comment', self.object)
+
+        return result
 
     def get_success_url(self):
         return reverse('task_management:detail',
@@ -112,6 +152,8 @@ class AcceptTaskView(TaskAcceptPermitMixin, View):
         assign.assign_accept = True
         assign.save()
 
+        TaskActionLog.log(self.request.user, 'accept task', task)
+
         return redirect(task)
 
 
@@ -123,6 +165,12 @@ class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
     def get_object(self, queryset=None):
         return self.model.objects.get(task=self.get_task(),
                                       user=self.request.user)
+
+    def post(self, request, *args, **kwargs):
+        result = super(RejectTaskView, self).post(request, *args, **kwargs)
+        TaskActionLog.log(self.request.user, 'reject task', self.object)
+
+        return result
 
     def get_success_url(self):
         return reverse('task_management:detail',
@@ -143,6 +191,8 @@ class ApproveTaskView(TaskApprovePermitMixin, View):
         task.status = Task.STATUS_APPROVE
         task.save()
 
+        TaskActionLog.log(self.request.user, 'approve task', task)
+
         return redirect(task)
 
 
@@ -151,8 +201,31 @@ class DeclineTaskView(TaskApprovePermitMixin, UpdateView):
     form_class = DeclineTaskForm
     template_name = 'task_management/task_decline_form.html'
 
+    def post(self, request, *args, **kwargs):
+        result = super(DeclineTaskView, self).post(request, *args, **kwargs)
+        TaskActionLog.log(self.request.user, 'decline task', self.object)
+
+        return result
+
 
 class ReassignTaskView(TaskReassignPermitMixin, UpdateView):
     model = Task
     form_class = ReassignTaskForm
     template_name = 'task_management/task_reassign_form.html'
+
+    def post(self, request, *args, **kwargs):
+        result = super(ReassignTaskView, self).post(request, *args, **kwargs)
+        TaskActionLog.log(self.request.user, 're-assign task', self.object)
+
+        return result
+
+
+class ActionLogListView(LoginRequiredMixin, ListView):
+    """ View for display the list of action logs """
+    model = TaskActionLog
+    template_name = 'task_management/action_log_list.html'
+    paginate_by = 25
+
+    def get_queryset(self):
+        return TaskActionLog.objects.select_related('actor').all()
+
