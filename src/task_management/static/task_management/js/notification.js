@@ -25,7 +25,6 @@ function task_fill_notification_list(data) {
 }
 
 function mark_read() {
-    alert('qwe');
     var r = new XMLHttpRequest();
         r.open("GET", notify_mark_all_unread_url, true);
         r.onreadystatechange = function () {

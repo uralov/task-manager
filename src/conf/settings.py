@@ -134,8 +134,14 @@ INSTALLED_APPS.extend([
     'task_management',  # enable task management system
 ])
 
+# email address from which you are sending
+EMAIL_FROM = 'test@test.com'
+
 # temporary configured for admin authorization
 LOGIN_URL = '/admin/login/'
+
+# temporary configured for send email to console
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - END
 

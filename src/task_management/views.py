@@ -6,8 +6,8 @@ from django.shortcuts import redirect
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView, View
 )
-from notifications.signals import notify
 
+from task_management.helpers import send_message
 from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
     DeclineTaskForm, ReassignTaskForm
 from task_management.models import Task, TaskComment, TaskAssignedUser, \
@@ -41,6 +41,8 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
+        recipients = form.instance
+
 
         return super(TaskCreateView, self).form_valid(form)
 
@@ -48,8 +50,6 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         user = self.request.user
         result = super(TaskCreateView, self).post(request, *args, **kwargs)
         TaskActionLog.log(user, 'create task', self.object)
-        notify.send(user, recipient=user, verb='create task',
-                    target=self.object)
 
         return result
 

@@ -71,7 +71,7 @@ class Task(MPTTModel):
         :return: list of assignment users
         """
         owner_chain = TaskAssignedUser.objects.filter(task=self).order_by(
-            'time_assign').prefetch_related('user')
+            'time_assign').select_related('user')
         if assign_accept:
             owner_chain = owner_chain.filter(assign_accept=assign_accept)
 
