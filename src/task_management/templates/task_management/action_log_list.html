@@ -9,6 +9,7 @@
             <li>
                 {{ log.actor }} {{ log.action }}
                 <a href="{{ log.action_goal.get_absolute_url }}">{{ log.action_goal }}</a>
+                {{ log.time_create }}
             </li>
         {% endfor %}
     </ul>
