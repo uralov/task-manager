@@ -220,7 +220,8 @@ class ActionLogListView(LoginRequiredMixin, ListView):
     """ View for display the list of action logs """
     model = TaskActionLog
     template_name = 'task_management/action_log_list.html'
+    paginate_by = 25
 
     def get_queryset(self):
-        return TaskActionLog.objects.select_related('actor', ).all()
+        return TaskActionLog.objects.select_related('actor').all()
 
