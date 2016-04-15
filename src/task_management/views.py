@@ -1,5 +1,7 @@
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.forms import model_to_dict
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView, View
@@ -38,15 +40,16 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
     form_class = TaskForm
 
     def form_valid(self, form):
-        user = self.request.user
-        notify.send(user, recipient=user, verb='create task', )
-
         form.instance.creator = self.request.user
+
         return super(TaskCreateView, self).form_valid(form)
 
     def post(self, request, *args, **kwargs):
+        user = self.request.user
         result = super(TaskCreateView, self).post(request, *args, **kwargs)
-        TaskActionLog.log(self.request.user, 'create task', self.object)
+        TaskActionLog.log(user, 'create task', self.object)
+        notify.send(user, recipient=user, verb='create task',
+                    target=self.object)
 
         return result
 
@@ -229,3 +232,42 @@ class ActionLogListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return TaskActionLog.objects.select_related('actor').all()
 
+
+def live_unread_notification_list(request):
+    """ Overriding notifications.views.live_unread_notification_list.
+    Adding target_url in params.
+    :param request:
+    :return:
+    """
+    if not request.user.is_authenticated():
+        data = {
+           'unread_count': 0,
+           'unread_list': [],
+        }
+        return JsonResponse(data)
+
+    try:
+        num_to_fetch = request.GET.get('max', 5)
+        num_to_fetch = int(num_to_fetch)
+        num_to_fetch = max(1, num_to_fetch)
+        num_to_fetch = min(num_to_fetch, 100)
+    except ValueError:
+        num_to_fetch = 5  # If casting to an int fails, just make it 5.
+
+    unread_list = []
+
+    for n in request.user.notifications.unread()[0:num_to_fetch]:
+        struct = model_to_dict(n)
+        if n.actor:
+            struct['actor'] = str(n.actor)
+        if n.target:
+            struct['target'] = str(n.target)
+            struct['target_url'] = n.target.get_absolute_url()
+        if n.action_object:
+            struct['action_object'] = str(n.action_object)
+        unread_list.append(struct)
+    data = {
+        'unread_count': request.user.notifications.unread().count(),
+        'unread_list': unread_list,
+    }
+    return JsonResponse(data)

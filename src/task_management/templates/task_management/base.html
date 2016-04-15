@@ -13,17 +13,17 @@
     <script src="{% static 'task_management/js/notification.js' %}" type="text/javascript"></script>
 </head>
 <body>
+
     {% block notification %}
         {% autoescape off %}
+            {% register_notify_callbacks callbacks='task_fill_notification_list,fill_notification_badge' %}
             {% notifications_unread as unread_count %}
-{#            {% if unread_count %}#}
-                <h3>Notifications {% live_notify_badge %}:</h3>
-                {% register_notify_callbacks callbacks='fill_notification_list,fill_notification_badge' %}
-                {% live_notify_list %}
-{#            {% endif %}#}
+            <h3>Notifications:</h3>
+            {% live_notify_list %}
         {% endautoescape %}
-        <br>
     {% endblock %}
+
     {% block content %}{% endblock %}
+
 </body>
 </html>
