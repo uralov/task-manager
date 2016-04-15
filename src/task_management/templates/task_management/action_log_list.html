@@ -1,0 +1,15 @@
+{% extends 'task_management/base.html' %}
+
+{% block content %}
+    <h1>Action log list</h1>
+    <p><a href="{% url 'task_management:list' %}">Task list</a></p>
+
+    <ul>
+        {% for log in object_list %}
+            <li>
+                {{ log.actor }} {{ log.action }}
+                <a href="{{ log.action_goal.get_absolute_url }}">{{ log.action_goal }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

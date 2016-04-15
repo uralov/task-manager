@@ -214,3 +214,13 @@ class ReassignTaskView(TaskReassignPermitMixin, UpdateView):
         TaskActionLog.log(self.request.user, 're-assign task', self.object)
 
         return result
+
+
+class ActionLogListView(LoginRequiredMixin, ListView):
+    """ View for display the list of action logs """
+    model = TaskActionLog
+    template_name = 'task_management/action_log_list.html'
+
+    def get_queryset(self):
+        return TaskActionLog.objects.select_related('actor', ).all()
+

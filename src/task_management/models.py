@@ -125,16 +125,17 @@ class TaskComment(models.Model):
     time_update = models.DateTimeField('Time of update', auto_now=True)
 
     def get_absolute_url(self):
-        return reverse('task_management:detail', kwargs={'pk': self.task.pk})
+        url = reverse('task_management:detail', kwargs={'pk': self.task.pk})
+
+        return '{0}#{1}'.format(url, self.pk)
 
 
 class TaskActionLog(models.Model):
     """ User action log """
     actor = models.ForeignKey(User, verbose_name='Actor')
     action = models.CharField('Action', max_length=512)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE,
-                                     blank=True, null=True)
-    object_id = models.PositiveIntegerField(blank=True, null=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
     action_goal = GenericForeignKey('content_type', 'object_id')
     time_create = models.DateTimeField('Time of action', auto_now_add=True)
 
