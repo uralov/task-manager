@@ -134,8 +134,9 @@ class TaskActionLog(models.Model):
     """ User action log """
     actor = models.ForeignKey(User, verbose_name='Actor')
     action = models.CharField('Action', max_length=512)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE,
+                                     null=True)
+    object_id = models.PositiveIntegerField(null=True)
     action_goal = GenericForeignKey('content_type', 'object_id')
     time_create = models.DateTimeField('Time of action', auto_now_add=True)
 

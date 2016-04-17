@@ -7,7 +7,8 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView, View
 )
 
-from task_management.helpers import send_message
+from task_management.helpers import send_message, \
+    get_recipients_by_task_owners_chain
 from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
     DeclineTaskForm, ReassignTaskForm
 from task_management.models import Task, TaskComment, TaskAssignedUser, \
@@ -41,8 +42,6 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        recipients = form.instance
-
 
         return super(TaskCreateView, self).form_valid(form)
 
@@ -59,6 +58,9 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
         return kwargs
 
+    def get_success_url(self):
+        return reverse('task_management:list')
+
 
 class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
     """ View for create sub task """
@@ -70,7 +72,11 @@ class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
 
     def post(self, request, *args, **kwargs):
         result = super(SubTaskCreateView, self).post(request, *args, **kwargs)
-        TaskActionLog.log(self.request.user, 'create task', self.object)
+
+        user = self.request.user
+        task = self.object
+        recipients = get_recipients_by_task_owners_chain(user, task.parent)
+        send_message(user, 'create sub task', task, recipients)
 
         return result
 

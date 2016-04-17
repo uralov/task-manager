@@ -16,6 +16,7 @@ urlpatterns = [
     url(r'^task_management/', include('task_management.urls',
                                       namespace='task_management')),
 
+    # override notifications unread list
     url(r'^inbox/notifications/api/unread_list/$',
         live_unread_notification_list, name='live_unread_notification_list'),
     url('^inbox/notifications/',

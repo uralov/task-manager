@@ -67,7 +67,9 @@ class TaskForm(forms.ModelForm):
             self._save_attachment(task_duplicate)
 
             TaskActionLog.log(self.user, 'create task', task_duplicate)
-            send_message(self.user, 'assigned you task', task, [task.owner])
+            if task_duplicate.owner:
+                send_message(self.user, 'assigned you task', task_duplicate,
+                             [task_duplicate.owner])
 
     def save(self, commit=True):
         """ Save task form to object
@@ -87,8 +89,8 @@ class TaskForm(forms.ModelForm):
             self.instance.owner = assigned_to.pop(0)
 
         task = super(TaskForm, self).save()
-
-        send_message(self.user, 'assigned you task', task, [task.owner])
+        if task.owner:
+            send_message(self.user, 'assigned you task', task, [task.owner])
 
         self._save_attachment(task)
 

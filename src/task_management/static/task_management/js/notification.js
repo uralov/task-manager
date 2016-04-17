@@ -6,7 +6,7 @@ function task_fill_notification_list(data) {
             var item = data.unread_list[i];
             var message = ""
             if(typeof item.actor !== 'undefined'){
-                message = item.actor;
+                message = "user '" + item.actor + "' ";
             }
             if(typeof item.verb !== 'undefined'){
                 message = message + " " + item.verb;
