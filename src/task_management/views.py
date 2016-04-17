@@ -32,6 +32,7 @@ class TaskListView(LoginRequiredMixin, ListView):
         context['task_created'] = Task.objects.filter(
             creator=self.request.user
         )
+
         return context
 
 
@@ -91,6 +92,14 @@ class TaskUpdateView(TaskChangePermitMixin, UpdateView):
         if task.status == Task.STATUS_DECLINE and user == task.creator:
             if form.cleaned_data['assigned_to']:
                 TaskAssignedUser.objects.filter(task=task).delete()
+
+        if task.status != form.cleaned_data['status']:
+            new_status = int(form.cleaned_data['status'])
+            new_status = dict(form.fields['status'].choices)[new_status]
+            send_message(
+                self.request.user,
+                'change status of task to {0}'.format(new_status),
+                task)
 
         return super(TaskUpdateView, self).form_valid(form)
 
@@ -162,6 +171,7 @@ class AcceptTaskView(TaskAcceptPermitMixin, View):
         assign.save()
 
         TaskActionLog.log(self.request.user, 'accept task', task)
+        send_message(self.request.user, 'assigned task', task)
 
         return redirect(task)
 
@@ -178,6 +188,7 @@ class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         result = super(RejectTaskView, self).post(request, *args, **kwargs)
         TaskActionLog.log(self.request.user, 'reject task', self.object)
+        send_message(self.request.user, 'reject task', self.get_task())
 
         return result
 
@@ -201,6 +212,7 @@ class ApproveTaskView(TaskApprovePermitMixin, View):
         task.save()
 
         TaskActionLog.log(self.request.user, 'approve task', task)
+        send_message(self.request.user, 'approve task', task)
 
         return redirect(task)
 
@@ -213,6 +225,7 @@ class DeclineTaskView(TaskApprovePermitMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         result = super(DeclineTaskView, self).post(request, *args, **kwargs)
         TaskActionLog.log(self.request.user, 'decline task', self.object)
+        send_message(self.request.user, 'decline task', self.object)
 
         return result
 
@@ -225,6 +238,11 @@ class ReassignTaskView(TaskReassignPermitMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         result = super(ReassignTaskView, self).post(request, *args, **kwargs)
         TaskActionLog.log(self.request.user, 're-assign task', self.object)
+        send_message(
+            self.request.user,
+            're-assign task to {0}'.format(self.object.owner),
+            self.object
+        )
 
         return result
 

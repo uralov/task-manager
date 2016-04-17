@@ -52,6 +52,7 @@ class TaskForm(forms.ModelForm):
         if self.cleaned_data['attachments']:
             TaskActionLog.log(self.user, 'add attachments to task',
                               task)
+            send_message(self.user, 'add attachments to task', task)
 
     def _save_multi_assign(self, assigned_to, task):
         """ Create separate task for every assigned user except first.

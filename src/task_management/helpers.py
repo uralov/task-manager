@@ -37,7 +37,7 @@ def get_recipients_by_task_owners_chain(actor, task):
     :param task: task object
     :return:
     """
-    owners_chain = task.get_owners_chain()
-    owners_chain.append(task.creator)
+    owners_chain = set(task.get_owners_chain())
+    owners_chain.add(task.creator)
 
-    return owners_chain
+    return list(owners_chain)

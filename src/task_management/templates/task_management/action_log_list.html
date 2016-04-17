@@ -8,7 +8,9 @@
         {% for log in object_list %}
             <li>
                 {{ log.actor }} {{ log.action }}
-                <a href="{{ log.action_goal.get_absolute_url }}">{{ log.action_goal }}</a>
+                {% if log.action_goal %}
+                    <a href="{{ log.action_goal.get_absolute_url }}">{{ log.action_goal }}</a>
+                {% endif %}
             </li>
         {% endfor %}
     </ul>
