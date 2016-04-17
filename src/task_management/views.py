@@ -1,10 +1,14 @@
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.forms import model_to_dict
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView, View
 )
 
+from task_management.helpers import send_message, \
+    get_recipients_by_task_owners_chain
 from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
     DeclineTaskForm, ReassignTaskForm
 from task_management.models import Task, TaskComment, TaskAssignedUser, \
@@ -28,6 +32,7 @@ class TaskListView(LoginRequiredMixin, ListView):
         context['task_created'] = Task.objects.filter(
             creator=self.request.user
         )
+
         return context
 
 
@@ -38,11 +43,13 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
+
         return super(TaskCreateView, self).form_valid(form)
 
     def post(self, request, *args, **kwargs):
+        user = self.request.user
         result = super(TaskCreateView, self).post(request, *args, **kwargs)
-        TaskActionLog.log(self.request.user, 'create task', self.object)
+        TaskActionLog.log(user, 'create task', self.object)
 
         return result
 
@@ -51,6 +58,9 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         kwargs.update({'user': self.request.user})
 
         return kwargs
+
+    def get_success_url(self):
+        return reverse('task_management:list')
 
 
 class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
@@ -63,7 +73,11 @@ class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
 
     def post(self, request, *args, **kwargs):
         result = super(SubTaskCreateView, self).post(request, *args, **kwargs)
-        TaskActionLog.log(self.request.user, 'create task', self.object)
+
+        user = self.request.user
+        task = self.object
+        recipients = get_recipients_by_task_owners_chain(user, task.parent)
+        send_message(user, 'create sub task', task, recipients)
 
         return result
 
@@ -78,6 +92,14 @@ class TaskUpdateView(TaskChangePermitMixin, UpdateView):
         if task.status == Task.STATUS_DECLINE and user == task.creator:
             if form.cleaned_data['assigned_to']:
                 TaskAssignedUser.objects.filter(task=task).delete()
+
+        if task.status != form.cleaned_data['status']:
+            new_status = int(form.cleaned_data['status'])
+            new_status = dict(form.fields['status'].choices)[new_status]
+            send_message(
+                self.request.user,
+                'change status of task to {0}'.format(new_status),
+                task)
 
         return super(TaskUpdateView, self).form_valid(form)
 
@@ -149,6 +171,7 @@ class AcceptTaskView(TaskAcceptPermitMixin, View):
         assign.save()
 
         TaskActionLog.log(self.request.user, 'accept task', task)
+        send_message(self.request.user, 'assigned task', task)
 
         return redirect(task)
 
@@ -165,6 +188,7 @@ class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         result = super(RejectTaskView, self).post(request, *args, **kwargs)
         TaskActionLog.log(self.request.user, 'reject task', self.object)
+        send_message(self.request.user, 'reject task', self.get_task())
 
         return result
 
@@ -188,6 +212,7 @@ class ApproveTaskView(TaskApprovePermitMixin, View):
         task.save()
 
         TaskActionLog.log(self.request.user, 'approve task', task)
+        send_message(self.request.user, 'approve task', task)
 
         return redirect(task)
 
@@ -200,6 +225,7 @@ class DeclineTaskView(TaskApprovePermitMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         result = super(DeclineTaskView, self).post(request, *args, **kwargs)
         TaskActionLog.log(self.request.user, 'decline task', self.object)
+        send_message(self.request.user, 'decline task', self.object)
 
         return result
 
@@ -212,6 +238,11 @@ class ReassignTaskView(TaskReassignPermitMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         result = super(ReassignTaskView, self).post(request, *args, **kwargs)
         TaskActionLog.log(self.request.user, 're-assign task', self.object)
+        send_message(
+            self.request.user,
+            're-assign task to {0}'.format(self.object.owner),
+            self.object
+        )
 
         return result
 
@@ -225,3 +256,42 @@ class ActionLogListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return TaskActionLog.objects.select_related('actor').all()
 
+
+def live_unread_notification_list(request):
+    """ Overriding notifications.views.live_unread_notification_list.
+    Adding target_url in params.
+    :param request:
+    :return:
+    """
+    if not request.user.is_authenticated():
+        data = {
+           'unread_count': 0,
+           'unread_list': [],
+        }
+        return JsonResponse(data)
+
+    try:
+        num_to_fetch = request.GET.get('max', 5)
+        num_to_fetch = int(num_to_fetch)
+        num_to_fetch = max(1, num_to_fetch)
+        num_to_fetch = min(num_to_fetch, 100)
+    except ValueError:
+        num_to_fetch = 5  # If casting to an int fails, just make it 5.
+
+    unread_list = []
+
+    for n in request.user.notifications.unread()[0:num_to_fetch]:
+        struct = model_to_dict(n)
+        if n.actor:
+            struct['actor'] = str(n.actor)
+        if n.target:
+            struct['target'] = str(n.target)
+            struct['target_url'] = n.target.get_absolute_url()
+        if n.action_object:
+            struct['action_object'] = str(n.action_object)
+        unread_list.append(struct)
+    data = {
+        'unread_count': request.user.notifications.unread().count(),
+        'unread_list': unread_list,
+    }
+    return JsonResponse(data)

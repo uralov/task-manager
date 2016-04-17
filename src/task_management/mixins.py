@@ -89,7 +89,8 @@ class TaskReassignPermitMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         # only owner which accepted task can re-assign task
         task = self.get_object()
-        if request.user == task.owner and task.owner_accept_task():
+        if request.user == task.owner and task.owner_accept_task() \
+                and task.status != task.STATUS_APPROVE:
             return super(TaskReassignPermitMixin, self).dispatch(
                 request, *args, **kwargs
             )

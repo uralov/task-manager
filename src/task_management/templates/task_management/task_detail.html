@@ -28,7 +28,7 @@
             <li><a href="{% url 'task_management:decline' object.pk %}">
                 Decline task
             </a></li>
-        {% elif user == object.owner and object.owner_accept_task %}
+        {% elif user == object.owner and object.owner_accept_task and object.status != object.STATUS_APPROVE %}
             <li><a href="{% url 'task_management:reassign' object.pk %}">
                 Re-assign task
             </a></li>

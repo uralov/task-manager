@@ -127,13 +127,21 @@ MEDIA_ROOT = os.path.join(
 
 
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - START
-# enable django-mptt (hierarchical models)
-INSTALLED_APPS.append('mptt')
-# enable task management system
-INSTALLED_APPS.append('task_management')
+
+INSTALLED_APPS.extend([
+    'mptt',  # enable django-mptt (hierarchical models)
+    'notifications',  # enable django notifications
+    'task_management',  # enable task management system
+])
+
+# email address from which you are sending
+EMAIL_FROM = 'test@test.com'
 
 # temporary configured for admin authorization
 LOGIN_URL = '/admin/login/'
+
+# temporary configured for send email to console
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - END
 

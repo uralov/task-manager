@@ -1,8 +1,8 @@
-from django.db import models
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey, TreeManyToManyField
 
 
@@ -71,7 +71,7 @@ class Task(MPTTModel):
         :return: list of assignment users
         """
         owner_chain = TaskAssignedUser.objects.filter(task=self).order_by(
-            'time_assign').prefetch_related('user')
+            'time_assign').select_related('user')
         if assign_accept:
             owner_chain = owner_chain.filter(assign_accept=assign_accept)
 
@@ -134,8 +134,9 @@ class TaskActionLog(models.Model):
     """ User action log """
     actor = models.ForeignKey(User, verbose_name='Actor')
     action = models.CharField('Action', max_length=512)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE,
+                                     null=True)
+    object_id = models.PositiveIntegerField(null=True)
     action_goal = GenericForeignKey('content_type', 'object_id')
     time_create = models.DateTimeField('Time of action', auto_now_add=True)
 
