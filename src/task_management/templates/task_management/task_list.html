@@ -10,7 +10,9 @@
     {% for task, structure in task_created|tree_info %}
         {% if structure.new_level %}<ul><li>{% else %}</li><li>{% endif %}
             <a href="{{ task.get_absolute_url }}">{{ task.title }}</a>
-            (assigned to {{ task.owner }})
+            {% if node.owner %}
+                (assigned to {{ task.owner }})
+            {% endif %}
         {% for level in structure.closed_levels %}</li></ul>{% endfor %}
     {% endfor %}
 
