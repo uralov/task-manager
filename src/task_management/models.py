@@ -1,9 +1,15 @@
+import os
+
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey, TreeManyToManyField
+
+
+def attachment_upload_dir(instance, filename):
+    return 'task_attachment/{0}/{1}'.format(instance.task.id, filename)
 
 
 class Task(MPTTModel):
@@ -122,7 +128,13 @@ class TaskAttachment(models.Model):
     task = models.ForeignKey(Task, related_name='attachments',
                              verbose_name='Attachment task')
     attachment = models.FileField('Attachment',
-                                  upload_to='task_attachment/%Y/%m/%d/')
+                                  upload_to=attachment_upload_dir)
+
+    def file_name(self):
+        return os.path.basename(self.attachment.name)
+
+    def __str__(self):
+        return self.file_name()
 
 
 class TaskComment(models.Model):

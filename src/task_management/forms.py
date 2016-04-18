@@ -42,14 +42,11 @@ class TaskForm(forms.ModelForm):
         model = Task
         fields = ['title', 'description', 'criticality', 'date_due']
 
-    # multiple upload file field
-    attachments = MultiFileField(required=False)
-
     def __init__(self, user=None, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
         self.user = user
-
         task = kwargs.get('instance')
+
         if not task or not task.owner:
             # multiple task assign
             self.fields['assigned_to'] = forms.ModelMultipleChoiceField(
@@ -73,8 +70,21 @@ class TaskForm(forms.ModelForm):
                 label='Assign again'
             )
 
+        # multiple upload file field
+        self.fields['attachments'] = MultiFileField(required=False)
+
+        if task:
+            attachments = task.attachments.all()
+            if attachments:
+                # delete attachment
+                self.fields['delete_attachment'] = forms.ModelMultipleChoiceField(
+                    queryset=attachments,
+                    widget=forms.CheckboxSelectMultiple,
+                    required=False,
+                )
+
     def _save_attachment(self, task):
-        """ Attachment files save
+        """ Save attachment files
         :param task: Task object
         :return:
         """""
@@ -85,6 +95,14 @@ class TaskForm(forms.ModelForm):
             TaskActionLog.log(self.user, 'add attachments to task',
                               task)
             send_message(self.user, 'add attachments to task', task)
+
+    def _delete_attachment(self, task):
+        """ Delete checked attachment files
+        :param task: Task object
+        :return:
+        """
+        for each in self.cleaned_data.get('delete_attachment', []):
+            each.delete()
 
     def _save_multi_assign(self, assigned_to, task):
         """ Create separate task for every assigned user except first.
@@ -126,6 +144,7 @@ class TaskForm(forms.ModelForm):
             send_message(self.user, 'assigned you task', task, [task.owner])
 
         self._save_attachment(task)
+        self._delete_attachment(task)
 
         self._save_multi_assign(assigned_to, task)
 

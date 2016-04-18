@@ -100,7 +100,8 @@ class TaskUpdateView(TaskChangePermitMixin, UpdateView):
             send_message(
                 self.request.user,
                 'change status of task to {0}'.format(new_status),
-                task)
+                task
+            )
 
         return super(TaskUpdateView, self).form_valid(form)
 

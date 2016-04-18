@@ -16,22 +16,6 @@
         {% for level in structure.closed_levels %}</li></ul>{% endfor %}
     {% endfor %}
 
-{#    <ul class="root">#}
-{#        {% recursetree task_created %}#}
-{#            <li>#}
-{#                <a href="{{ node.get_absolute_url }}">{{ node.title }}</a>#}
-{#                {% if node.owner %}#}
-{#                    (assigned to {{ node.owner }})#}
-{#                {% endif %}#}
-{#                {% if not node.is_leaf_node %}#}
-{#                    <ul class="children">#}
-{#                        {{ children }}#}
-{#                    </ul>#}
-{#                {% endif %}#}
-{#            </li>#}
-{#        {% endrecursetree %}#}
-{#    </ul>#}
-
     <h2>Assigned to me:</h2>
     {% for task, structure in tasks_assigned|tree_info %}
         {% if structure.new_level %}<ul><li>{% else %}</li><li>{% endif %}

@@ -1,8 +1,8 @@
 from functools import reduce
 from django.dispatch import receiver
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete
 
-from task_management.models import Task, TaskAssignedUser
+from task_management.models import Task, TaskAssignedUser, TaskAttachment
 
 
 @receiver(post_save, sender=Task)
@@ -63,3 +63,9 @@ def recalculate_status(parent_task, current_task):
     status_avg = int(status_sum / len(children_status))
     parent_task.status = status_avg
     parent_task.save()
+
+
+@receiver(pre_delete, sender=TaskAttachment)
+def attachment_delete(sender, instance, **kwargs):
+    """ Delete attachment from file system """
+    instance.attachment.delete(False)
