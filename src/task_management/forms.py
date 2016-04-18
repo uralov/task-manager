@@ -92,8 +92,7 @@ class TaskForm(forms.ModelForm):
             TaskAttachment.objects.create(attachment=each, task=task)
 
         if self.cleaned_data['attachments']:
-            TaskActionLog.log(self.user, 'add attachments to task',
-                              task)
+            TaskActionLog.log(self.user, 'add attachments to task', task)
             send_message(self.user, 'add attachments to task', task)
 
     def _delete_attachment(self, task):
