@@ -56,9 +56,10 @@ def recalculate_parent_task_status(sender, instance, **kwargs):
 def recalculate_status(parent_task, current_task):
     """ Calculate parent task status by average child task status. """
     children = parent_task.get_children()
-    children_status = [i.status for i in children if i.id != current_task.id]
-    children_status.append(current_task.status)
+    children_status = [int(i.status) for i in children
+                       if i.id != current_task.id]
+    children_status.append(int(current_task.status))
     status_sum = reduce(lambda x, y: x + y, children_status)
-    status_avg = int(status_sum/len(children_status))
+    status_avg = int(status_sum / len(children_status))
     parent_task.status = status_avg
     parent_task.save()

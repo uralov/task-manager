@@ -94,7 +94,7 @@ class TaskUpdateView(TaskChangePermitMixin, UpdateView):
                 TaskAssignedUser.objects.filter(task=task).delete()
 
         form_task_status = form.cleaned_data.get('status')
-        if form_task_status and task.status != form_task_status:
+        if form_task_status and str(task.status) != form_task_status:
             new_status = int(form_task_status)
             new_status = dict(form.fields['status'].choices)[new_status]
             send_message(
