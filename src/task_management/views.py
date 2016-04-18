@@ -8,7 +8,7 @@ from django.views.generic import (
 )
 
 from task_management.helpers import send_message, \
-    get_recipients_by_task_owners_chain
+    get_recipients_by_task
 from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
     DeclineTaskForm, ReassignTaskForm
 from task_management.models import Task, TaskComment, TaskAssignedUser, \
@@ -76,7 +76,7 @@ class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
 
         user = self.request.user
         task = self.object
-        recipients = get_recipients_by_task_owners_chain(user, task.parent)
+        recipients = get_recipients_by_task(task.parent)
         send_message(user, 'create sub task', task, recipients)
 
         return result

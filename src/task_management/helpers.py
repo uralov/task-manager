@@ -12,7 +12,7 @@ def send_message(actor, verb, task, recipients=()):
     :return:
     """
     if not recipients:
-        recipients = get_recipients_by_task_owners_chain(actor, task)
+        recipients = get_recipients_by_task(task)
 
     # actor not receive messages about self activities
     recipients = [user for user in recipients if user != actor]
@@ -31,11 +31,10 @@ def send_message(actor, verb, task, recipients=()):
                   [recipient.email])
 
 
-def get_recipients_by_task_owners_chain(actor, task):
+def get_recipients_by_task(task):
     """ Get recipients list by task owners chain.
-    :param actor: user object
     :param task: task object
-    :return:
+    :return: task owners list
     """
     owners_chain = set(task.get_owners_chain())
     owners_chain.add(task.creator)

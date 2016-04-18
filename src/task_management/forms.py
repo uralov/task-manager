@@ -6,7 +6,8 @@ from multiupload.fields import MultiFileField
 from task_management.helpers import send_message
 from task_management.models import (
     Task, TaskAttachment, TaskComment, TaskAssignedUser,
-    TaskActionLog)
+    TaskActionLog
+)
 
 
 class TaskForm(forms.ModelForm):
@@ -15,6 +16,7 @@ class TaskForm(forms.ModelForm):
         model = Task
         fields = ['title', 'description', 'criticality', 'date_due']
 
+    # multiple upload file field
     attachments = MultiFileField(max_num=10, required=False)
 
     def __init__(self, user=None, *args, **kwargs):
@@ -46,6 +48,10 @@ class TaskForm(forms.ModelForm):
             )
 
     def _save_attachment(self, task):
+        """ Attachment files save
+        :param task: Task object
+        :return:
+        """""
         for each in self.cleaned_data['attachments']:
             TaskAttachment.objects.create(attachment=each, task=task)
 
@@ -74,8 +80,8 @@ class TaskForm(forms.ModelForm):
 
     def save(self, commit=True):
         """ Save task form to object
-        :param commit:
-        :return:
+        :param commit: save form if True
+        :return: task object
         """
         status = self.cleaned_data.get('status')
         if status:
@@ -142,6 +148,7 @@ class ReassignTaskForm(forms.ModelForm):
         task = kwargs.get('instance')
         owners_chain_id = [user.id for user in task.get_owners_chain()]
         owners_chain_id.append(task.creator_id)
+
         self.fields['owner'] = forms.ModelChoiceField(
             queryset=User.objects.all().exclude(id__in=owners_chain_id),
             required=True, label='Re-assign to'

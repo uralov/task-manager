@@ -62,11 +62,14 @@ class Task(MPTTModel):
         return reverse('task_management:detail', kwargs={'pk': self.pk})
 
     def owner_accept_task(self):
+        """ Owner is accepted task
+        :return: boolean
+        """
         return TaskAssignedUser.objects.filter(task=self).order_by(
             'time_assign').last().assign_accept
 
     def get_owners_chain(self, assign_accept=None):
-        """ get chain of assignment users
+        """ Get chain of assignment users
         :param assign_accept:
         :return: list of assignment users
         """
@@ -78,10 +81,17 @@ class Task(MPTTModel):
         return [obj.user for obj in owner_chain]
 
     def get_accepted_owners_chain(self):
+        """ Get owners which accepted task
+        :return: list of assignment users
+        """
         return self.get_owners_chain(assign_accept=True)
 
     @staticmethod
     def is_status_can_change(status):
+        """ Check whether it is possible to change the status
+        :param status: task status
+        :return: boolean
+        """
         return Task.STATUS_PENDING < status < Task.STATUS_APPROVE
 
     def __str__(self):
