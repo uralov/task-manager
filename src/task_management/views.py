@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import redirect
@@ -21,17 +22,44 @@ from task_management.mixins import (
 class TaskListView(LoginRequiredMixin, ListView):
     """ View to display the list of tasks """
     model = Task
-    context_object_name = 'tasks_assigned'
+    # context_object_name = 'tasks_assigned'
 
     def get_queryset(self):
+        user = self.request.user
         queryset = super(TaskListView, self).get_queryset()
-        return queryset.filter(owners=self.request.user)
+        queryset = queryset.filter(Q(owners=user) | Q(creator=user))
+
+        return queryset
+
+    @staticmethod
+    def get_trees(qs):
+        task_list = qs.order_by('parent')
+        trees = {}
+        task_list_without_parent_node = []
+        for t in task_list:
+            if not t.parent:
+                trees[(t.id,)] = (t,)
+            else:
+                task_list_without_parent_node.append(t)
+
+        task_list = task_list_without_parent_node
+        while task_list:
+            t = task_list.pop(0)
+            for k, v in trees.items():
+                if t.parent_id in k:
+                    trees[k+(t.id,)] = trees.pop(k) + (t,)
+                    t = False
+                    break
+
+            if t:
+                # if parent not fount create new element
+                trees[(t.id,)] = (t,)
+
+        return [v for k, v in trees.items()]
 
     def get_context_data(self, **kwargs):
         context = super(TaskListView, self).get_context_data(**kwargs)
-        context['task_created'] = Task.objects.filter(
-            creator=self.request.user
-        )
+        context['task_trees'] = self.get_trees(self.get_queryset())
 
         return context
 

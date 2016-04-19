@@ -6,20 +6,16 @@
     <div><a href="{% url 'task_management:create' %}">Create task</a></div>
     <div><a href="{% url 'task_management:action_log' %}">Action logs</a></div>
 
-    <h2>Created by me:</h2>
-    {% for task, structure in task_created|tree_info %}
-        {% if structure.new_level %}<ul><li>{% else %}</li><li>{% endif %}
-            <a href="{{ task.get_absolute_url }}">{{ task.title }}</a>
-            {% if task.owner %}
-                (assigned to {{ task.owner }})
-            {% endif %}
-        {% for level in structure.closed_levels %}</li></ul>{% endfor %}
+    <h2>Tasks:</h2>
+    {% for tree in task_trees %}
+        {% for task, structure in tree|tree_info %}
+            {% if structure.new_level %}<ul><li>{% else %}</li><li>{% endif %}
+                <a href="{{ task.get_absolute_url }}">{{ task.title }}</a>
+                {% if task.owner %}
+                    (assigned to {{ task.owner }})
+                {% endif %}
+            {% for level in structure.closed_levels %}</li></ul>{% endfor %}
+        {% endfor %}
     {% endfor %}
 
-    <h2>Assigned to me:</h2>
-    {% for task, structure in tasks_assigned|tree_info %}
-        {% if structure.new_level %}<ul><li>{% else %}</li><li>{% endif %}
-            <a href="{{ task.get_absolute_url }}">{{ task.title }}</a>
-        {% for level in structure.closed_levels %}</li></ul>{% endfor %}
-    {% endfor %}
 {% endblock %}
