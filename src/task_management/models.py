@@ -173,3 +173,7 @@ class TaskActionLog(models.Model):
         """
         return TaskActionLog.objects.create(actor=actor, action=action,
                                             action_goal=action_goal)
+
+    class Meta:
+        ordering = ('-id', )
+

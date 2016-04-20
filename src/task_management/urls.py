@@ -1,10 +1,9 @@
 from django.conf.urls import url
 
-from task_management.views import (
-    TaskListView, TaskCreateView, TaskUpdateView, TaskDetailView,
-    TaskDeleteView, SubTaskCreateView, CommentCreateView,
-    AcceptTaskView, RejectTaskView,
-    ApproveTaskView, DeclineTaskView, ReassignTaskView, ActionLogListView)
+from task_management.views import TaskListView, TaskCreateView, \
+    TaskUpdateView, TaskDetailView, TaskDeleteView, SubTaskCreateView, \
+    CommentCreateView, AcceptTaskView, RejectTaskView, ApproveTaskView, \
+    DeclineTaskView, ReassignTaskView, ActionLogListView
 
 
 urlpatterns = [

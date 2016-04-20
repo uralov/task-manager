@@ -4,25 +4,22 @@ from django.db.models import Q
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import redirect
-from django.views.generic import (
-    ListView, CreateView, UpdateView, DetailView, DeleteView, View
-)
+from django.views.generic import ListView, CreateView, UpdateView, \
+    DetailView, DeleteView, View
 
-from task_management.helpers import send_message, \
-    get_recipients_by_task
+from task_management.helpers import send_message, get_recipients_by_task
 from task_management.forms import TaskForm, CommentForm, RejectTaskForm, \
     DeclineTaskForm, ReassignTaskForm
 from task_management.models import Task, TaskComment, TaskAssignedUser, \
     TaskActionLog
-from task_management.mixins import (
-    TaskChangePermitMixin, TaskViewPermitMixin, TaskDeletePermitMixin,
-    TaskAcceptPermitMixin, TaskApprovePermitMixin, TaskReassignPermitMixin)
+from task_management.mixins import TaskChangePermitMixin, \
+    TaskViewPermitMixin, TaskDeletePermitMixin, TaskAcceptPermitMixin, \
+    TaskApprovePermitMixin, TaskReassignPermitMixin
 
 
 class TaskListView(LoginRequiredMixin, ListView):
-    """ View to display the list of tasks """
+    """ View for display the list of tasks """
     model = Task
-    # context_object_name = 'tasks_assigned'
 
     def get_queryset(self):
         user = self.request.user
@@ -32,8 +29,12 @@ class TaskListView(LoginRequiredMixin, ListView):
         return queryset
 
     @staticmethod
-    def get_trees(qs):
-        task_list = qs.order_by('parent')
+    def get_trees(task_queryset):
+        """ Create task trees from queryset.
+        :param task_queryset: Task model queryset
+        :return: list of task trees
+        """
+        task_list = task_queryset.order_by('parent')
         trees = {}
         task_list_without_parent_node = []
         for t in task_list:
@@ -65,19 +66,15 @@ class TaskListView(LoginRequiredMixin, ListView):
 
 
 class TaskCreateView(LoginRequiredMixin, CreateView):
-    """ View for create task """
+    """ View for create new task """
     model = Task
     form_class = TaskForm
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
+        result = super(TaskCreateView, self).form_valid(form)
 
-        return super(TaskCreateView, self).form_valid(form)
-
-    def post(self, request, *args, **kwargs):
-        user = self.request.user
-        result = super(TaskCreateView, self).post(request, *args, **kwargs)
-        TaskActionLog.log(user, 'create task', self.object)
+        TaskActionLog.log(self.request.user, 'create task', self.object)
 
         return result
 
@@ -96,21 +93,18 @@ class SubTaskCreateView(TaskChangePermitMixin, TaskCreateView):
     def form_valid(self, form):
         parent_task = Task.objects.get(pk=self.kwargs['pk'])
         form.instance.parent = parent_task
+        result = super(SubTaskCreateView, self).form_valid(form)
 
-        return super(SubTaskCreateView, self).form_valid(form)
-
-    def post(self, request, *args, **kwargs):
-        result = super(SubTaskCreateView, self).post(request, *args, **kwargs)
-
-        user = self.request.user
-        task = self.object
-        recipients = get_recipients_by_task(task.parent)
-        send_message(user, 'create sub task', task, recipients)
+        # send message
+        recipients = get_recipients_by_task(parent_task)
+        send_message(self.request.user, 'create sub task', self.object,
+                     recipients)
 
         return result
 
 
 class TaskUpdateView(TaskChangePermitMixin, UpdateView):
+    """ View for update task """
     model = Task
     form_class = TaskForm
 
@@ -131,13 +125,9 @@ class TaskUpdateView(TaskChangePermitMixin, UpdateView):
                 task
             )
 
+        TaskActionLog.log(user, 'update task', task)
+
         return super(TaskUpdateView, self).form_valid(form)
-
-    def post(self, request, *args, **kwargs):
-        result = super(TaskUpdateView, self).post(request, *args, **kwargs)
-        TaskActionLog.log(self.request.user, 'update task', self.object)
-
-        return result
 
     def get_form_kwargs(self):
         kwargs = super(TaskUpdateView, self).get_form_kwargs()
@@ -147,6 +137,7 @@ class TaskUpdateView(TaskChangePermitMixin, UpdateView):
 
 
 class TaskDetailView(TaskViewPermitMixin, DetailView):
+    """ View for display task detail """
     model = Task
 
     def get_context_data(self, **kwargs):
@@ -161,6 +152,7 @@ class TaskDetailView(TaskViewPermitMixin, DetailView):
 
 
 class TaskDeleteView(TaskDeletePermitMixin, DeleteView):
+    """ View for delete task """
     model = Task
     success_url = reverse_lazy('task_management:list')
 
@@ -172,6 +164,7 @@ class TaskDeleteView(TaskDeletePermitMixin, DeleteView):
 
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
+    """ View for comment task """
     model = TaskComment
     form_class = CommentForm
 
@@ -193,6 +186,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
 
 
 class AcceptTaskView(TaskAcceptPermitMixin, View):
+    """ View for accept task """
     def get(self, *args, **kwargs):
         task = self.get_task()
         assign = TaskAssignedUser.objects.get(task=task,
@@ -207,6 +201,7 @@ class AcceptTaskView(TaskAcceptPermitMixin, View):
 
 
 class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
+    """ View for reject task """
     model = TaskAssignedUser
     form_class = RejectTaskForm
     template_name = 'task_management/task_reject_form.html'
@@ -228,6 +223,7 @@ class RejectTaskView(TaskAcceptPermitMixin, UpdateView):
 
 
 class ApproveTaskView(TaskApprovePermitMixin, View):
+    """ View for reject task """
     object = None
 
     def get_object(self):
@@ -248,6 +244,7 @@ class ApproveTaskView(TaskApprovePermitMixin, View):
 
 
 class DeclineTaskView(TaskApprovePermitMixin, UpdateView):
+    """ View for decline task """
     model = Task
     form_class = DeclineTaskForm
     template_name = 'task_management/task_decline_form.html'
@@ -261,6 +258,7 @@ class DeclineTaskView(TaskApprovePermitMixin, UpdateView):
 
 
 class ReassignTaskView(TaskReassignPermitMixin, UpdateView):
+    """ View for re-assign task """
     model = Task
     form_class = ReassignTaskForm
     template_name = 'task_management/task_reassign_form.html'
