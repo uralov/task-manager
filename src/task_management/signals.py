@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_save, pre_delete
 
 from task_management.models import Task, TaskAssignedUser, TaskAttachment
+from task_management.helpers import send_message
 
 
 @receiver(post_save, sender=Task)
@@ -72,6 +73,13 @@ def recalculate_status(parent_task, current_task):
     if status_avg > Task.STATUS_COMPLETE:
         # the parent task status cannot be greater STATUS_COMPLETE
         status_avg = Task.STATUS_COMPLETE
+        send_message(
+            current_task.owner,
+            'change status of task to {0}'.format(
+                dict(Task.STATUS_CHOICES)[status_avg]
+            ),
+            parent_task
+        )
 
     parent_task.status = status_avg
     parent_task.save()

@@ -2,6 +2,7 @@ from django import forms
 
 
 class MultiFileInput(forms.FileInput):
+    """ Multi file field widget """
     def render(self, name, value, attrs=None):
         attrs['multiple'] = 'multiple'
         return super(MultiFileInput, self).render(name, value, attrs)
@@ -18,12 +19,14 @@ class MultiFileInput(forms.FileInput):
 
 
 class MultiFileField(forms.FileField):
+    """ Multiple file field """
     widget = MultiFileInput
 
     def to_python(self, data):
-        ret = []
+        result = []
         for item in data:
             i = super(MultiFileField, self).to_python(item)
             if i:
-                ret.append(i)
-        return ret
+                result.append(i)
+
+        return result
