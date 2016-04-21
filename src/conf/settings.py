@@ -143,6 +143,9 @@ LOGIN_URL = '/admin/login/'
 # temporary configured for send email to console
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+
+
+
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - END
 
 
