@@ -6,10 +6,12 @@
     <a href="{% url 'task_management:list' %}">Task list</a>
     <ul>
         {% if user == object.creator or user in object.get_accepted_owners_chain %}
-            <li><a href="{% url 'task_management:update' object.pk %}">Edit task</a></li>
-            <li><a href="{% url 'task_management:sub_task_create' object.pk %}">
-                Sub task create
-            </a></li>
+            {% if object.status != object.STATUS_APPROVE %}
+                <li><a href="{% url 'task_management:update' object.pk %}">Edit task</a></li>
+                <li><a href="{% url 'task_management:sub_task_create' object.pk %}">
+                    Sub task create
+                </a></li>
+            {% endif %}
         {% endif %}
         {% if user == object.creator %}
             <li><a href="{% url 'task_management:delete' object.pk %}">Delete task</a></li>
@@ -43,7 +45,7 @@
         </a>
     {% endif %}
     <ul>
-        <li>Title: {{ task.title }}</li>
+        <li>Title: <b>{{ task.title }}</b></li>
         <li>description: {{ task.description }}</li>
         <li>Creator: {{ task.creator }}</li>
         <li>Owner: {{ task.owner }}</li>
@@ -53,8 +55,6 @@
         {% endif %}
         <li>Criticality: {{ task.get_criticality_display }}</li>
         <li>Date due: {{ task.date_due }}</li>
-        <li>Time create: {{ task.time_create }}</li>
-        <li>Time update: {{ task.time_update }}</li>
 
         <li>Attachments:
             <ul>

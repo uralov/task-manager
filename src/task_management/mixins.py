@@ -11,7 +11,8 @@ class TaskChangePermitMixin(LoginRequiredMixin):
         # only creator and owner accepted task can update task
         task = self.get_object()
         user = request.user
-        if user == task.creator or user in task.get_owners_chain(True):
+        if (user == task.creator or user in task.get_owners_chain(True)) \
+                and task.status != Task.STATUS_APPROVE:
             return super(TaskChangePermitMixin, self).dispatch(
                 request, *args, **kwargs
             )

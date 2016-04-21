@@ -11,8 +11,12 @@
         {% for task, structure in tree|tree_info %}
             {% if structure.new_level %}<ul><li>{% else %}</li><li>{% endif %}
                 <a href="{{ task.get_absolute_url }}">{{ task.title }}</a>
+                Status: {{ task.get_status_display }};
+                {% if task.date_due %}
+                    Date due: {{ task.date_due }};
+                {% endif %}
                 {% if task.owner %}
-                    (assigned to {{ task.owner }})
+                    Assigned to {{ task.owner }}
                 {% endif %}
             {% for level in structure.closed_levels %}</li></ul>{% endfor %}
         {% endfor %}

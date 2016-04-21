@@ -61,6 +61,18 @@ def recalculate_status(parent_task, current_task):
     children_status.append(int(current_task.status))
     status_sum = reduce(lambda x, y: x + y, children_status)
     status_avg = int(status_sum / len(children_status))
+
+    if status_avg < Task.STATUS_WORKING:
+        # the parent task status cannot be less STATUS_WORKING
+        status_avg = Task.STATUS_WORKING
+    if status_avg == Task.STATUS_COMPLETE:
+        # the parent task status equal COMPLETE if all parent task have APPROVE
+        # status
+        status_avg = Task.STATUS_ALMOST_DONE
+    if status_avg > Task.STATUS_COMPLETE:
+        # the parent task status cannot be greater STATUS_COMPLETE
+        status_avg = Task.STATUS_COMPLETE
+
     parent_task.status = status_avg
     parent_task.save()
 

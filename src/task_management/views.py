@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.forms import model_to_dict
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.views.generic import ListView, CreateView, UpdateView, \
     DetailView, DeleteView, View
@@ -168,14 +168,14 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     model = TaskComment
     form_class = CommentForm
 
+    def form_invalid(self, form):
+        return HttpResponseRedirect(self.get_success_url())
+
     def form_valid(self, form):
         form.instance.task = Task.objects.get(pk=self.kwargs['pk'])
         form.instance.author = self.request.user
 
-        return super(CommentCreateView, self).form_valid(form)
-
-    def post(self, request, *args, **kwargs):
-        result = super(CommentCreateView, self).post(request, *args, **kwargs)
+        result = super(CommentCreateView, self).form_valid(form)
         TaskActionLog.log(self.request.user, 'add comment', self.object)
 
         return result
