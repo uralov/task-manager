@@ -144,7 +144,23 @@ LOGIN_URL = '/admin/login/'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
+# Celery configuration
+# http://docs.celeryproject.org/
 
+# FOR PRODUCTION CHANGE BROKER TO REDIS OR RABBIT MQ
+# and comment kombu.transport.django in INSTALLED_APPS
+BROKER_URL = "django://"
+INSTALLED_APPS.extend(['kombu.transport.django'])
+
+CELERY_APP_NAME = 'task_management'
+
+from celery.schedules import crontab
+CELERYBEAT_SCHEDULE = {
+    # 'sync_statistics': {
+    #     'task': 'sync_statistics',
+    #     'schedule': crontab(minute='0', hour='0'),
+    # },
+}
 
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - END
 
