@@ -1,6 +1,11 @@
+import datetime
 from django.core.mail import send_mail
 from django.conf import settings
+from conf.app_celery import app
+
 from notifications.signals import notify
+
+from task_management.models import Task
 
 
 def send_message(actor, verb, task, recipients=()):
@@ -26,9 +31,8 @@ def send_message(actor, verb, task, recipients=()):
         # send notification
         notify.send(actor, recipient=recipient, verb=verb, target=task)
 
-        # send email
-        send_mail('New notification', email_msg, settings.EMAIL_FROM,
-                  [recipient.email])
+        # send mail via delay task
+        send_email.delay(recipient.email, email_msg)
 
 
 def get_recipients_by_task(task):
@@ -40,3 +44,23 @@ def get_recipients_by_task(task):
     owners_chain.add(task.creator)
 
     return list(owners_chain)
+
+
+@app.task(name='send_email')
+def send_email(recipient, message):
+    send_mail('New notification', message, settings.EMAIL_FROM, [recipient])
+
+
+@app.task(name='send_deadline_notifications')
+def send_deadline_notifications():
+    """ Send reminders about coming deadlines
+    :return:
+    """
+    deadline_interval_date = (
+        datetime.date.today() +
+        datetime.timedelta(days=settings.TASK_DEADLINE_INTERVAL)
+    )
+    tasks = Task.objects.filter(date_due=deadline_interval_date,
+                                status__lt=Task.STATUS_COMPLETE)
+    for task in tasks:
+        send_message(task.creator, 'reminds about task', task)

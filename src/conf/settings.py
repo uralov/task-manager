@@ -147,20 +147,21 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Celery configuration
 # http://docs.celeryproject.org/
 
-# FOR PRODUCTION CHANGE BROKER TO REDIS OR RABBIT MQ
-# and comment kombu.transport.django in INSTALLED_APPS
-BROKER_URL = "django://"
-INSTALLED_APPS.extend(['kombu.transport.django'])
+# YOU CAN CHANGE BROKER
+# http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#choosing-a-broker
+BROKER_URL = "redis://localhost:6379/0"
 
 CELERY_APP_NAME = 'task_management'
 
 from celery.schedules import crontab
 CELERYBEAT_SCHEDULE = {
-    # 'sync_statistics': {
-    #     'task': 'sync_statistics',
-    #     'schedule': crontab(minute='0', hour='0'),
-    # },
+    'send_deadline_notifications': {
+        'task': 'send_deadline_notifications',
+        'schedule': crontab(minute='0', hour='12'),
+    },
 }
+# The number of days for which it is necessary to remind about the task
+TASK_DEADLINE_INTERVAL = 7
 
 # TASK MANAGEMENT SYSTEM CONFIG BLOCK - END
 

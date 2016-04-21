@@ -3,6 +3,7 @@ django-debug-toolbar<1.5
 
 # Distributed Task Queue
 celery<3.2
+celery[redis]
 
 # Modified Preorder Tree Traversal for Django Models
 django-mptt<0.9

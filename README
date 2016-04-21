@@ -3,9 +3,11 @@
 * clone project `git clone https://Listener@bitbucket.org/Listener/task_management.git`
 * go to the root of the project
 * setup requirements from requirements.txt `pip install -r requirements.txt`
+* install redis server `sudo apt-get -y install redis-server`. Used as celery broker
 * go to the src directory `cd src`
 * migrate database `python manage.py migrate`
 * create superuser `python manage.py createsuperuser`
 * collect static `python manage.py collectstatic`
 * run developer server `python manage.py runserver`
+* run celery server `celery -A conf.app_celery worker -l info -B` for delayed email sending and periodic task running
 * if you use production server, change `settings.DEBUG = False`
