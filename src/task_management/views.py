@@ -310,6 +310,7 @@ def live_unread_notification_list(request):
 
     for n in request.user.notifications.unread()[0:num_to_fetch]:
         struct = model_to_dict(n)
+        struct['slug'] = n.slug
         if n.actor:
             struct['actor'] = str(n.actor)
         if n.target:

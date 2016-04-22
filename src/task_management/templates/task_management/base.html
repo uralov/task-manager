@@ -17,7 +17,6 @@
     {% block notification %}
         {% autoescape off %}
             {% register_notify_callbacks callbacks='task_fill_notification_list,fill_notification_badge' fetch='10' %}
-            {% notifications_unread as unread_count %}
             <h3>Notifications:</h3>
             {% live_notify_list %}
         {% endautoescape %}

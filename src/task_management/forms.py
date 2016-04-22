@@ -102,15 +102,17 @@ class TaskForm(forms.ModelForm):
             self.instance.status = status
 
         assigned_to = self.cleaned_data.get('assigned_to', [])
+        need_send_message = False
         try:
             assigned_to = list(assigned_to)
         except TypeError:
             assigned_to = [assigned_to]
         if assigned_to:
             self.instance.owner = assigned_to.pop(0)
+            need_send_message = True
 
         task = super(TaskForm, self).save()
-        if task.owner:
+        if need_send_message:
             send_message(self.user, 'assigned you task', task, [task.owner])
 
         self._save_attachment(task)
