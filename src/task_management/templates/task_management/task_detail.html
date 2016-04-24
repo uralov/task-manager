@@ -48,13 +48,13 @@
         <li>Title: <b>{{ task.title }}</b></li>
         <li>Description: {{ task.description }}</li>
         <li>Creator: {{ task.creator }}</li>
-        <li>Owner: {{ task.owner }}</li>
+        <li>Owner: {{ task.owner|default:'' }}</li>
         <li>Status: {{ task.get_status_display }}</li>
         {% if task.status == task.STATUS_DECLINED %}
             <li>Decline description: {{ task.status_description }}</li>
         {% endif %}
         <li>Criticality: {{ task.get_criticality_display }}</li>
-        <li>Date due: {{ task.date_due }}</li>
+        <li>Date due: {{ task.date_due|default:'' }}</li>
 
         <li>Attachments:
             <ul>

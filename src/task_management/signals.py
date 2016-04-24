@@ -34,6 +34,7 @@ def change_assign_status(sender, instance, **kwargs):
 
     if instance.assign_accept is False:
         task.status = Task.STATUS_DECLINE
+        task.owner = None
 
     task.save()
 
