@@ -59,7 +59,9 @@
         <li>Attachments:
             <ul>
                 {% for file in task.attachments.all %}
-                    <li><a href="{{ file.attachment.url }}">{{ file.attachment.name }}</a></li>
+                    <li><a href="{{ file.attachment.url }}" target="_blank">
+                        {{ file.attachment.name }}
+                    </a></li>
                 {% endfor %}
             </ul>
         </li>

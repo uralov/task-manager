@@ -195,7 +195,7 @@ class AcceptTaskView(TaskAcceptPermitMixin, View):
         assign.save()
 
         TaskActionLog.log(self.request.user, 'accept task', task)
-        send_message(self.request.user, 'assigned task', task)
+        send_message(self.request.user, 'accept task', task)
 
         return redirect(task)
 
