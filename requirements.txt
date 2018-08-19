@@ -2,7 +2,7 @@ django==2.1
 django-debug-toolbar==1.9.1
 
 # Distributed Task Queue
-celery<3.2
+celery==4.2.1
 redis<2.11
 
 # Modified Preorder Tree Traversal for Django Models
