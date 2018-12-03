@@ -1,5 +1,5 @@
 django<1.10
-django-debug-toolbar<1.5
+django-debug-toolbar==1.11
 
 # Distributed Task Queue
 celery<3.2
